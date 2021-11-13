@@ -3,6 +3,7 @@ import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { ClassroomsRepository } from './classroom.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from './classroom.entity';
+import { User } from 'src/auth/user.entity';
 
 @Injectable()
 export class ClassroomsService {
@@ -11,12 +12,14 @@ export class ClassroomsService {
     private classroomsRepository: ClassroomsRepository,
   ) {}
 
-  getClassrooms(): Promise<Classroom[]> {
-    return this.classroomsRepository.getClassrooms();
+  getClassrooms(user: User): Promise<Classroom[]> {
+    return this.classroomsRepository.getClassrooms(user);
   }
 
-  async getClassroomById(id: string): Promise<Classroom> {
-    const found = await this.classroomsRepository.findOne(id);
+  async getClassroomById(id: string, user: User): Promise<Classroom> {
+    const found = await this.classroomsRepository.findOne({
+      where: { id, user },
+    });
 
     if (!found) {
       throw new NotFoundException(`Classroom with ID "${id}" not found!`);
@@ -25,15 +28,34 @@ export class ClassroomsService {
     return found;
   }
 
-  createClassroom(createClassroomDto: CreateClassroomDto): Promise<Classroom> {
-    return this.classroomsRepository.createClassroom(createClassroomDto);
+  createClassroom(
+    createClassroomDto: CreateClassroomDto,
+    user: User,
+  ): Promise<Classroom> {
+    return this.classroomsRepository.createClassroom(createClassroomDto, user);
   }
 
-  async deleteClassroom(id: string): Promise<void> {
-    const result = await this.classroomsRepository.delete(id);
+  async deleteClassroom(id: string, user: User): Promise<void> {
+    const result = await this.classroomsRepository.delete({ id, user });
 
     if (result.affected === 0) {
       throw new NotFoundException(`Classroom with ID "${id}" not found!`);
     }
+  }
+
+  async updateClassroom(
+    id: string,
+    updateClassroomDto: CreateClassroomDto,
+    user: User,
+  ): Promise<Classroom> {
+    const { name, description, section, subject, room } = updateClassroomDto;
+    const classroom = await this.getClassroomById(id, user);
+    classroom.name = name;
+    classroom.description = description;
+    classroom.section = section;
+    classroom.subject = subject;
+    classroom.room = room;
+    await this.classroomsRepository.save(classroom);
+    return classroom;
   }
 }

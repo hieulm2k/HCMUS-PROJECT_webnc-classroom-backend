@@ -1,10 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import { User } from 'src/auth/user.entity';
+import { BaseEntity } from 'src/utils/base.entity';
+import { Column, Entity, ManyToOne } from 'typeorm';
 
 @Entity()
-export class Classroom {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Classroom extends BaseEntity {
   @Column()
   name: string;
 
@@ -19,4 +19,8 @@ export class Classroom {
 
   @Column()
   room: string;
+
+  @ManyToOne((_type) => User, (user) => user.classrooms, { eager: false })
+  @Exclude({ toPlainOnly: true })
+  user: User;
 }

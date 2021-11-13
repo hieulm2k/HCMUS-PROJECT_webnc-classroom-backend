@@ -1,31 +1,73 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ClassroomsService } from './classrooms.service';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { Classroom } from './classroom.entity';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { User } from 'src/auth/user.entity';
+import { JwtAuthGuard } from 'src/auth/jwt.guard';
 
 @Controller('classrooms')
+@ApiTags('classrooms')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('access-token')
 export class ClassroomsController {
   constructor(private classroomService: ClassroomsService) {}
 
   @Get()
-  getClassrooms(): Promise<Classroom[]> {
-    return this.classroomService.getClassrooms();
+  @ApiOkResponse({ type: [Classroom] })
+  getClassrooms(@GetUser() user: User): Promise<Classroom[]> {
+    return this.classroomService.getClassrooms(user);
   }
 
   @Get('/:id')
-  async getClassroomById(@Param('id') id: string): Promise<Classroom> {
-    return this.classroomService.getClassroomById(id);
+  @ApiOkResponse({ type: Classroom })
+  async getClassroomById(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<Classroom> {
+    return this.classroomService.getClassroomById(id, user);
   }
 
   @Post()
+  @ApiCreatedResponse({ type: Classroom })
   createClassroom(
     @Body() createClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
   ): Promise<Classroom> {
-    return this.classroomService.createClassroom(createClassroomDto);
+    return this.classroomService.createClassroom(createClassroomDto, user);
   }
 
   @Delete('/:id')
-  deleteClassroom(@Param('id') id: string): Promise<void> {
-    return this.classroomService.deleteClassroom(id);
+  @ApiOkResponse({ type: Classroom })
+  deleteClassroom(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.classroomService.deleteClassroom(id, user);
+  }
+
+  @Patch('/:id')
+  @ApiCreatedResponse({ type: Classroom })
+  updateClassroom(
+    @Param('id') id: string,
+    @Body() updateClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
+  ): Promise<Classroom> {
+    return this.classroomService.updateClassroom(id, updateClassroomDto, user);
   }
 }
