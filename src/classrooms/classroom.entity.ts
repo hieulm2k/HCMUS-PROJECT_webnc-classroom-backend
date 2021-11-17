@@ -1,7 +1,8 @@
 import { Exclude } from 'class-transformer';
-import { User } from 'src/auth/user.entity';
+import { User } from 'src/user/user.entity';
 import { BaseEntity } from 'src/utils/base.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { JoinClassroom } from '../join-classroom/join-classroom.entity';
 
 @Entity()
 export class Classroom extends BaseEntity {
@@ -20,7 +21,12 @@ export class Classroom extends BaseEntity {
   @Column()
   room: string;
 
-  @ManyToOne((_type) => User, (user) => user.classrooms, { eager: false })
-  @Exclude({ toPlainOnly: true })
-  user: User;
+  @OneToMany(
+    (_type) => JoinClassroom,
+    (joinClassroom: JoinClassroom) => joinClassroom.classroom,
+    {
+      eager: true,
+    },
+  )
+  joinClassrooms: JoinClassroom[];
 }

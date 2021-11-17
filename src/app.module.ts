@@ -4,6 +4,9 @@ import { ClassroomsModule } from './classrooms/classrooms.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { configValidationSchema } from './config.schema';
 import { AuthModule } from './auth/auth.module';
+import { UserController } from './user/user.controller';
+import { UserModule } from './user/user.module';
+import { JoinClassroomModule } from './join-classroom/join-classroom.module';
 
 @Module({
   imports: [
@@ -35,6 +38,9 @@ import { AuthModule } from './auth/auth.module';
       },
     }),
     AuthModule,
+    UserModule,
+    JoinClassroomModule,
   ],
+  controllers: [UserController],
 })
 export class AppModule {}
