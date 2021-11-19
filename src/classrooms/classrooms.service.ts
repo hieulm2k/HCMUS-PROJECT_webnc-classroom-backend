@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { ClassroomsRepository } from './classroom.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from './classroom.entity';
 import { User } from 'src/user/user.entity';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ClassroomsService {
@@ -12,6 +13,7 @@ export class ClassroomsService {
     @InjectRepository(ClassroomsRepository)
     private classroomsRepository: ClassroomsRepository,
     private joinClassroomService: JoinClassroomService,
+    private userService: UserService,
   ) {}
 
   async getClassrooms(user: User): Promise<Classroom[]> {
@@ -38,9 +40,9 @@ export class ClassroomsService {
     user: User,
   ): Promise<Classroom> {
     const joinClassroom = await this.joinClassroomService.createJoinClassroom();
+    await this.userService.updateJoinClassroom(user, joinClassroom);
     return this.classroomsRepository.createClassroom(
       createClassroomDto,
-      user,
       joinClassroom,
     );
   }

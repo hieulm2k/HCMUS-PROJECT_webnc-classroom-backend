@@ -1,4 +1,3 @@
-import { Classroom } from 'src/classrooms/classroom.entity';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Entity, Column, OneToMany } from 'typeorm';
@@ -17,12 +16,8 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   studentId: string;
 
-  @OneToMany(
-    (_type) => JoinClassroom,
-    (joinClassroom: JoinClassroom) => joinClassroom.user,
-    {
-      eager: true,
-    },
-  )
+  @OneToMany((_type) => JoinClassroom, (joinClassroom) => joinClassroom.user, {
+    eager: true,
+  })
   joinClassrooms: JoinClassroom[];
 }

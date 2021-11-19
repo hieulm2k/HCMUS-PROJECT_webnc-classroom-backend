@@ -1,7 +1,5 @@
-import { Exclude } from 'class-transformer';
-import { User } from 'src/user/user.entity';
 import { BaseEntity } from 'src/utils/base.entity';
-import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { JoinClassroom } from '../join-classroom/join-classroom.entity';
 
 @Entity()
@@ -9,21 +7,21 @@ export class Classroom extends BaseEntity {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   description: string;
 
-  @Column()
+  @Column({ nullable: true })
   section: string;
 
-  @Column()
+  @Column({ nullable: true })
   subject: string;
 
-  @Column()
+  @Column({ nullable: true })
   room: string;
 
   @OneToMany(
     (_type) => JoinClassroom,
-    (joinClassroom: JoinClassroom) => joinClassroom.classroom,
+    (joinClassroom) => joinClassroom.classroom,
     {
       eager: true,
     },
