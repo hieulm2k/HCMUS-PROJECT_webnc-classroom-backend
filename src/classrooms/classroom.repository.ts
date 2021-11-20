@@ -5,21 +5,9 @@ import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 
 @EntityRepository(Classroom)
 export class ClassroomsRepository extends Repository<Classroom> {
-  async getClassrooms(joinClassrooms: JoinClassroom[]) {
-    // const token = randomBytes(48).toString('base64url');
-    // console.log(token);
-    const classrooms: Classroom[] = [];
-    joinClassrooms.map((joinClassroom) => {
-      classrooms.push(joinClassroom.classroom);
-    });
-
-    return classrooms;
-  }
-
   async createClassroom(
     createClassroomDto: CreateClassroomDto,
-    joinClassroom: JoinClassroom,
-  ) {
+  ): Promise<Classroom> {
     const { name, description, section, subject, room } = createClassroomDto;
 
     const classroom = this.create({
@@ -28,7 +16,7 @@ export class ClassroomsRepository extends Repository<Classroom> {
       section,
       subject,
       room,
-      joinClassrooms: [joinClassroom],
+      code: (Math.random() + 1).toString(36).substring(4),
     });
 
     await this.save(classroom);

@@ -7,7 +7,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 @Entity()
 export class JoinClassroom extends BaseEntity {
   @Column({ enum: Role, type: 'enum', array: true })
-  role: Role[];
+  roles: Role[];
 
   @ManyToOne((_type) => User, (user) => user.joinClassrooms, {
     eager: false,
