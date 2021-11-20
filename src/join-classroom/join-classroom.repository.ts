@@ -21,12 +21,15 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
       const results: object[] = [];
 
       for (let i = 0; i < joinClassrooms.length; i++) {
-        const owner = await this.getClassroomOwner(joinClassrooms[i].classroom);
+        const owner = await this.getMembersByRole(
+          joinClassrooms[i].classroom,
+          Role.OWNER,
+        );
+
+        console.log(owner);
+
         results.push({
-          owner: {
-            id: owner.id,
-            email: owner.email,
-          },
+          owner: owner[0],
           classroom: joinClassrooms[i].classroom,
         });
       }
@@ -58,17 +61,26 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
     }
   }
 
-  async getClassroomOwner(classroom: Classroom): Promise<User> {
+  async getMembersByRole(classroom: Classroom, role: Role): Promise<object[]> {
     const query = this.createQueryBuilder('joinClassroom');
     query
       .where({ classroom })
       .leftJoinAndSelect('joinClassroom.user', 'user')
-      .andWhere(':role = ANY(roles)', { role: Role.OWNER });
+      .andWhere(':role = ANY(roles)', { role: role });
 
     try {
-      return await (
-        await query.getOne()
-      ).user;
+      const joinClassrooms = await query.getMany();
+      const users: any[] = [];
+      joinClassrooms.map((item) => {
+        const user = item.user;
+        users.push({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          studentId: user.studentId,
+        });
+      });
+      return users;
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException();

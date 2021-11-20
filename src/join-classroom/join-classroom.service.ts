@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from 'src/auth/enum/role.enum';
 import { Classroom } from 'src/classrooms/classroom.entity';
@@ -21,8 +21,8 @@ export class JoinClassroomService {
     return this.joinClassroomRepository.getClassroomByUser(classroom, user);
   }
 
-  getClassroomOwner(classroom: Classroom): Promise<User> {
-    return this.joinClassroomRepository.getClassroomOwner(classroom);
+  getMembersByRole(classroom: Classroom, role: Role): Promise<object[]> {
+    return this.joinClassroomRepository.getMembersByRole(classroom, role);
   }
 
   createJoinClassroom(roles: Role[]): Promise<JoinClassroom> {

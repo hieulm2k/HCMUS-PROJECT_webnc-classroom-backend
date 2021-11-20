@@ -36,6 +36,14 @@ export class ClassroomsController {
     return this.classroomService.getClassroomById(id, user);
   }
 
+  @Get('/:id/members')
+  async getMembers(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<object> {
+    return this.classroomService.getMembers(id, user);
+  }
+
   @Post()
   createClassroom(
     @Body() createClassroomDto: CreateClassroomDto,

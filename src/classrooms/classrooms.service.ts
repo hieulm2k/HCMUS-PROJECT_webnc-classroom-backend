@@ -22,8 +22,20 @@ export class ClassroomsService {
     return this.joinClassroomService.getClassrooms(user);
   }
 
-  async getClassroomOwner(classroom: Classroom): Promise<User> {
-    return this.joinClassroomService.getClassroomOwner(classroom);
+  async getMembers(id: string, user: User): Promise<object> {
+    const classroom = await this.getClassroomById(id, user);
+    const students = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.STUDENT,
+    );
+    const teachers = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.TEACHER,
+    );
+    return {
+      students,
+      teachers,
+    };
   }
 
   async getClassroomById(id: string, user: User): Promise<Classroom> {
