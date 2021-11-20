@@ -1,3 +1,4 @@
+import { classToPlain, Exclude } from 'class-transformer';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Entity, Column, OneToMany } from 'typeorm';
@@ -8,6 +9,7 @@ export class User extends BaseEntity {
   email: string;
 
   @Column()
+  @Exclude({ toPlainOnly: true })
   password: string;
 
   @Column()

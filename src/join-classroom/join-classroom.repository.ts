@@ -26,8 +26,6 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
           Role.OWNER,
         );
 
-        console.log(owner);
-
         results.push({
           owner: owner[0],
           classroom: joinClassrooms[i].classroom,
@@ -36,7 +34,6 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
 
       return results;
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException();
     }
   }
@@ -61,7 +58,7 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
     }
   }
 
-  async getMembersByRole(classroom: Classroom, role: Role): Promise<object[]> {
+  async getMembersByRole(classroom: Classroom, role: Role): Promise<User[]> {
     const query = this.createQueryBuilder('joinClassroom');
     query
       .where({ classroom })
@@ -70,19 +67,12 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
 
     try {
       const joinClassrooms = await query.getMany();
-      const users: any[] = [];
+      const users: User[] = [];
       joinClassrooms.map((item) => {
-        const user = item.user;
-        users.push({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          studentId: user.studentId,
-        });
+        users.push(item.user);
       });
       return users;
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException();
     }
   }

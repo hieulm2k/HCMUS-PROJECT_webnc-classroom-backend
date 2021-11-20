@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { ClassroomsRepository } from './classroom.repository';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +13,7 @@ import { JoinClassroomService } from 'src/join-classroom/join-classroom.service'
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/auth/enum/role.enum';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
+import { InviteJoinClassroomDto } from './dto/invite-join-classroom.dto';
 
 @Injectable()
 export class ClassroomsService {
@@ -23,19 +29,62 @@ export class ClassroomsService {
   }
 
   async getMembers(id: string, user: User): Promise<object> {
+    const students = await this.getStudents(id, user);
+    const teachers = await this.getTeachers(id, user);
+    return {
+      students,
+      teachers,
+    };
+  }
+
+  async getStudents(id: string, user: User): Promise<User[]> {
     const classroom = await this.getClassroomById(id, user);
     const students = await this.joinClassroomService.getMembersByRole(
       classroom,
       Role.STUDENT,
     );
+    return students;
+  }
+
+  async getTeachers(id: string, user: User): Promise<User[]> {
+    const classroom = await this.getClassroomById(id, user);
     const teachers = await this.joinClassroomService.getMembersByRole(
       classroom,
       Role.TEACHER,
     );
-    return {
-      students,
-      teachers,
-    };
+    return teachers;
+  }
+
+  async joinClassroomByCode(
+    id: string,
+    user: User,
+    inviteJoinClassroomDto: InviteJoinClassroomDto,
+  ): Promise<void> {
+    try {
+      const classroom = await this.getClassroomById(id, user);
+    } catch (error) {
+      // If not found -> user not join to this class
+      const classroom = await this.classroomsRepository.findOne({ id });
+      const { code, role } = inviteJoinClassroomDto;
+      if (code !== classroom.code) {
+        throw new NotAcceptableException(
+          `Code "${code}" not accept by classroom with id "${id}"!`,
+        );
+      }
+
+      const joinClassroom = await this.joinClassroomService.createJoinClassroom(
+        [role],
+      );
+
+      await this.updateJoinClassroom(classroom, joinClassroom);
+      await this.userService.updateJoinClassroom(user, joinClassroom);
+    }
+
+    // if found a classroom that user joined -> throw exception
+
+    throw new InternalServerErrorException(
+      'You are already a teacher in this class',
+    );
   }
 
   async getClassroomById(id: string, user: User): Promise<Classroom> {
@@ -95,7 +144,6 @@ export class ClassroomsService {
     classroom: Classroom,
     joinClassroom: JoinClassroom,
   ): Promise<object> {
-    console.log(classroom.joinClassrooms);
     if (classroom.joinClassrooms === undefined) {
       classroom.joinClassrooms = [joinClassroom];
     } else {
