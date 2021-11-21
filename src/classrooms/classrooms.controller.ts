@@ -22,13 +22,17 @@ import {
 } from './dto/invite-join-classroom.dto';
 import { Role } from 'src/auth/enum/role.enum';
 import { IsEmail } from 'class-validator';
+import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access-token')
 export class ClassroomsController {
-  constructor(private classroomService: ClassroomsService) {}
+  constructor(
+    private classroomService: ClassroomsService,
+    private joinClassroomService: JoinClassroomService,
+  ) {}
 
   @Get()
   getClassrooms(@GetUser() user: User): Promise<object[]> {
@@ -39,8 +43,17 @@ export class ClassroomsController {
   async getClassroomById(
     @Param('id') id: string,
     @GetUser() user: User,
-  ): Promise<Classroom> {
-    return this.classroomService.getClassroomById(id, user);
+  ): Promise<object> {
+    const classroom = await this.classroomService.getClassroomById(id, user);
+    const teachers = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.TEACHER,
+    );
+
+    return {
+      classroom,
+      teachers: teachers,
+    };
   }
 
   @Get('/:id/members')
