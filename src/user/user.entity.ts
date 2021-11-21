@@ -21,5 +21,6 @@ export class User extends BaseEntity {
   @OneToMany((_type) => JoinClassroom, (joinClassroom) => joinClassroom.user, {
     eager: true,
   })
+  @Exclude({ toPlainOnly: true })
   joinClassrooms: JoinClassroom[];
 }

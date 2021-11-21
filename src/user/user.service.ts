@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.entity';
 import { UsersRepository } from './users.repository';
 @Injectable()
@@ -27,6 +28,16 @@ export class UserService {
     joinClassroom: JoinClassroom,
   ): Promise<User> {
     user.joinClassrooms = [...user.joinClassrooms, joinClassroom];
+    await this.userRepository.save(user);
+    return user;
+  }
+
+  async updateUser(user: User, updateUserDto: UpdateUserDto): Promise<User> {
+    const { name, studentId } = updateUserDto;
+
+    user.name = name;
+    user.studentId = studentId;
+
     await this.userRepository.save(user);
     return user;
   }
