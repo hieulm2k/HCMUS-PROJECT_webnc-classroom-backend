@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotAcceptableException,
@@ -61,15 +62,20 @@ export class ClassroomsService {
     inviteJoinClassroomDto: InviteJoinClassroomDto,
   ): Promise<void> {
     try {
-      const classroom = await this.getClassroomById(id, user);
+      await this.getClassroomById(id, user);
     } catch (error) {
       // If not found -> user not join to this class
       const classroom = await this.classroomsRepository.findOne({ id });
       const { code, role } = inviteJoinClassroomDto;
+
       if (code !== classroom.code) {
         throw new NotAcceptableException(
           `Code "${code}" not accept by classroom with id "${id}"!`,
         );
+      }
+
+      if (role === Role.OWNER) {
+        throw new BadRequestException(`You cannot be the owner of this class!`);
       }
 
       const joinClassroom = await this.joinClassroomService.createJoinClassroom(
@@ -78,12 +84,13 @@ export class ClassroomsService {
 
       await this.updateJoinClassroom(classroom, joinClassroom);
       await this.userService.updateJoinClassroom(user, joinClassroom);
+      return;
     }
 
     // if found a classroom that user joined -> throw exception
 
     throw new InternalServerErrorException(
-      'You are already a teacher in this class',
+      'You are already join in this class',
     );
   }
 
