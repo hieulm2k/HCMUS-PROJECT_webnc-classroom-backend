@@ -40,6 +40,6 @@ import { UsersRepository } from '../user/users.repository';
     },
   ],
   controllers: [AuthController],
-  exports: [JwtModule, PassportModule],
+  exports: [JwtModule, PassportModule, AuthService],
 })
 export class AuthModule {}

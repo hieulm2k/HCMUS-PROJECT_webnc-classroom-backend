@@ -23,6 +23,18 @@ export class UserService {
     return found;
   }
 
+  async getByEmail(email: string): Promise<User> {
+    const found = await this.userRepository.findOne({
+      where: email,
+    });
+
+    if (!found) {
+      throw new NotFoundException(`User with email "${email}" not found!`);
+    }
+
+    return found;
+  }
+
   async updateJoinClassroom(
     user: User,
     joinClassroom: JoinClassroom,
@@ -40,5 +52,15 @@ export class UserService {
 
     await this.userRepository.save(user);
     return user;
+  }
+
+  async createWithGoogle(email: string, name: string) {
+    const newUser = await this.userRepository.create({
+      email,
+      name,
+      isRegisteredWithGoogle: true,
+    });
+    await this.userRepository.save(newUser);
+    return newUser;
   }
 }

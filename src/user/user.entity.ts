@@ -10,13 +10,17 @@ export class User extends BaseEntity {
 
   @Column()
   @Exclude({ toPlainOnly: true })
-  password: string;
+  @Column({ nullable: true })
+  password?: string;
 
   @Column()
   name: string;
 
   @Column({ nullable: true })
   studentId: string;
+
+  @Column({ default: false })
+  public isRegisteredWithGoogle: boolean;
 
   @OneToMany((_type) => JoinClassroom, (joinClassroom) => joinClassroom.user, {
     eager: true,

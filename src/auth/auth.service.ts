@@ -23,19 +23,19 @@ export class AuthService {
     const user = await this.userRepository.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const payload: JwtPayload = { email };
-      const accessToken: string = await this.jwtService.sign(payload);
+      const accessToken = await this.getJwtAccessToken(user.email);
       return {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          studentId: user.studentId,
-        },
+        user: user,
         accessToken,
       };
     } else {
       throw new UnauthorizedException('Please check your login credentials');
     }
+  }
+
+  async getJwtAccessToken(email: string) {
+    const payload: JwtPayload = { email };
+    const accessToken: string = await this.jwtService.sign(payload);
+    return accessToken;
   }
 }

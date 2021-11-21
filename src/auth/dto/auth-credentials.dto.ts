@@ -35,9 +35,6 @@ export class SignInDto {
   @ApiProperty()
   email: string;
 
-  @IsString()
-  @MinLength(8)
-  @MaxLength(32)
   @ApiProperty()
-  password: string;
+  password?: string;
 }

@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserController } from './user/user.controller';
 import { UserModule } from './user/user.module';
 import { JoinClassroomModule } from './join-classroom/join-classroom.module';
+import { GoogleAuthenticationModule } from './google-authentication/google-authentication.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { JoinClassroomModule } from './join-classroom/join-classroom.module';
     AuthModule,
     UserModule,
     JoinClassroomModule,
+    GoogleAuthenticationModule,
   ],
   controllers: [UserController],
 })

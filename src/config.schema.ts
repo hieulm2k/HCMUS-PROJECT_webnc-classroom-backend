@@ -9,4 +9,6 @@ export const configValidationSchema = Joi.object({
   DB_DATABASE: Joi.string().required(),
   JWT_SECRET: Joi.string().required(),
   FE_URL: Joi.string().required(),
+  GOOGLE_AUTH_CLIENT_ID: Joi.string().required(),
+  GOOGLE_AUTH_CLIENT_SECRET: Joi.string().required(),
 });
