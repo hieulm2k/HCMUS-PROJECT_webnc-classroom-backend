@@ -14,7 +14,11 @@ import { JoinClassroomService } from 'src/join-classroom/join-classroom.service'
 import { UserService } from 'src/user/user.service';
 import { Role } from 'src/auth/enum/role.enum';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
-import { InviteJoinClassroomDto } from './dto/invite-join-classroom.dto';
+import {
+  InviteJoinClassroomByEmailDto,
+  InviteJoinClassroomDto,
+} from './dto/invite-join-classroom.dto';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class ClassroomsService {
@@ -23,6 +27,7 @@ export class ClassroomsService {
     private classroomsRepository: ClassroomsRepository,
     private joinClassroomService: JoinClassroomService,
     private userService: UserService,
+    private mailService: MailService,
   ) {}
 
   async getClassrooms(user: User): Promise<object[]> {
@@ -61,11 +66,16 @@ export class ClassroomsService {
     user: User,
     inviteJoinClassroomDto: InviteJoinClassroomDto,
   ): Promise<void> {
+    const classroom = await this.classroomsRepository.findOne({ id });
+
+    if (!classroom) {
+      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+    }
+
     try {
       await this.getClassroomById(id, user);
     } catch (error) {
       // If not found -> user not join to this class
-      const classroom = await this.classroomsRepository.findOne({ id });
       const { code, role } = inviteJoinClassroomDto;
 
       if (code !== classroom.code) {
@@ -91,6 +101,42 @@ export class ClassroomsService {
 
     throw new InternalServerErrorException(
       'You are already join in this class',
+    );
+  }
+
+  async joinClassroomByEmail(
+    id: string,
+    user: User,
+    inviteJoinClassroomByEmailDto: InviteJoinClassroomByEmailDto,
+  ): Promise<void> {
+    const classroom = await this.classroomsRepository.findOne(id);
+
+    if (!classroom) {
+      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+    }
+
+    const { email, role } = inviteJoinClassroomByEmailDto;
+
+    try {
+      const targetUser = await this.userService.getByEmail(email);
+      await this.getClassroomById(id, targetUser);
+    } catch (error) {
+      // If not found -> user not join to this class
+      if (role === Role.OWNER) {
+        throw new BadRequestException(`You cannot be the owner of this class!`);
+      }
+      return;
+      return this.mailService.sendInviteJoinClassroom(
+        user.name,
+        email,
+        role,
+        classroom,
+      );
+    }
+
+    // if found a classroom that user joined -> throw exception
+    throw new InternalServerErrorException(
+      `This user with email "${email}" is already join in this class`,
     );
   }
 

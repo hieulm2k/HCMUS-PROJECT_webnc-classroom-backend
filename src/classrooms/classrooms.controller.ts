@@ -16,8 +16,12 @@ import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/user/user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
-import { InviteJoinClassroomDto } from './dto/invite-join-classroom.dto';
+import {
+  InviteJoinClassroomByEmailDto,
+  InviteJoinClassroomDto,
+} from './dto/invite-join-classroom.dto';
 import { Role } from 'src/auth/enum/role.enum';
+import { IsEmail } from 'class-validator';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -59,6 +63,21 @@ export class ClassroomsController {
       id,
       user,
       inviteJoinClassroomDto,
+    );
+  }
+
+  @Get('/:id/joinByEmail')
+  @ApiQuery({ name: 'role', enum: Role })
+  @ApiQuery({ name: 'email', type: String })
+  async joinClassroomByEmail(
+    @Param('id') id: string,
+    @GetUser() user: User,
+    @Query() inviteJoinClassroomByEmailDto: InviteJoinClassroomByEmailDto,
+  ): Promise<void> {
+    return this.classroomService.joinClassroomByEmail(
+      id,
+      user,
+      inviteJoinClassroomByEmailDto,
     );
   }
 

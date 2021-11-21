@@ -1,15 +1,23 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsEnum, IsString } from 'class-validator';
 import { Role } from 'src/auth/enum/role.enum';
 
 export class InviteJoinClassroomDto {
-  @IsOptional()
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
-  code?: string;
+  code: string;
 
-  @IsOptional()
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsEnum(Role)
-  role?: Role;
+  role: Role;
+}
+
+export class InviteJoinClassroomByEmailDto {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsEnum(Role)
+  role: Role;
 }
