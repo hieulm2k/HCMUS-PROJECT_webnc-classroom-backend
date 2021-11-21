@@ -125,7 +125,7 @@ export class ClassroomsService {
       if (role === Role.OWNER) {
         throw new BadRequestException(`You cannot be the owner of this class!`);
       }
-      return;
+
       return this.mailService.sendInviteJoinClassroom(
         user.name,
         email,
