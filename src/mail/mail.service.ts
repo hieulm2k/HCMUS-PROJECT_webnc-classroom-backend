@@ -20,7 +20,7 @@ export class MailService {
       classroom.id +
       '/join?code=' +
       code +
-      '?role=' +
+      '&role=' +
       role;
 
     return this.mailerService.sendMail({
