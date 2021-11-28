@@ -1,3 +1,4 @@
+import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { JoinClassroom } from '../join-classroom/join-classroom.entity';
@@ -30,4 +31,13 @@ export class Classroom extends BaseEntity {
     },
   )
   joinClassrooms: JoinClassroom[];
+
+  @OneToMany(
+    (_type) => GradeStructure,
+    (gradeStructure) => gradeStructure.classroom,
+    {
+      eager: true,
+    },
+  )
+  gradeStructures: GradeStructure[];
 }

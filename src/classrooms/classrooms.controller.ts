@@ -56,6 +56,31 @@ export class ClassroomsController {
     };
   }
 
+  @Post()
+  createClassroom(
+    @Body() createClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
+  ): Promise<object> {
+    return this.classroomService.createClassroom(createClassroomDto, user);
+  }
+
+  @Patch('/:id')
+  updateClassroom(
+    @Param('id') id: string,
+    @Body() updateClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
+  ): Promise<Classroom> {
+    return this.classroomService.updateClassroom(id, updateClassroomDto, user);
+  }
+
+  @Delete('/:id')
+  deleteClassroom(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.classroomService.deleteClassroom(id, user);
+  }
+
   @Get('/:id/members')
   async getMembers(
     @Param('id') id: string,
@@ -92,30 +117,5 @@ export class ClassroomsController {
       user,
       inviteJoinClassroomByEmailDto,
     );
-  }
-
-  @Post()
-  createClassroom(
-    @Body() createClassroomDto: CreateClassroomDto,
-    @GetUser() user: User,
-  ): Promise<object> {
-    return this.classroomService.createClassroom(createClassroomDto, user);
-  }
-
-  @Delete('/:id')
-  deleteClassroom(
-    @Param('id') id: string,
-    @GetUser() user: User,
-  ): Promise<void> {
-    return this.classroomService.deleteClassroom(id, user);
-  }
-
-  @Patch('/:id')
-  updateClassroom(
-    @Param('id') id: string,
-    @Body() updateClassroomDto: CreateClassroomDto,
-    @GetUser() user: User,
-  ): Promise<Classroom> {
-    return this.classroomService.updateClassroom(id, updateClassroomDto, user);
   }
 }
