@@ -56,7 +56,7 @@ export class UserService {
     });
 
     if (found && studentId != user.studentId) {
-      throw new ConflictException('StudentId is already exists');
+      throw new ConflictException('Student ID is already exists');
     }
 
     user.name = name;
