@@ -7,7 +7,7 @@ export class GradeStructure extends BaseEntity {
   @Column({ unique: true })
   name: string;
 
-  @Column({ type: 'double' })
+  @Column({ type: 'double precision' })
   grade: number;
 
   @Column({ type: 'int' })

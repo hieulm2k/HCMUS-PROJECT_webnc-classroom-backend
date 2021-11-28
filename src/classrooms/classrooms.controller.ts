@@ -21,8 +21,8 @@ import {
   InviteJoinClassroomDto,
 } from './dto/invite-join-classroom.dto';
 import { Role } from 'src/auth/enum/role.enum';
-import { IsEmail } from 'class-validator';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -32,6 +32,7 @@ export class ClassroomsController {
   constructor(
     private classroomService: ClassroomsService,
     private joinClassroomService: JoinClassroomService,
+    private gradeStructureService: GradeStructureService,
   ) {}
 
   @Get()
@@ -87,6 +88,15 @@ export class ClassroomsController {
     @GetUser() user: User,
   ): Promise<object> {
     return this.classroomService.getMembers(id, user);
+  }
+
+  @Get('/:id/grade-structure')
+  async getGradeStructure(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<object> {
+    const classroom = await this.classroomService.getClassroomById(id, user);
+    return this.gradeStructureService.getGradeStructure(classroom);
   }
 
   @Get('/:id/join')
