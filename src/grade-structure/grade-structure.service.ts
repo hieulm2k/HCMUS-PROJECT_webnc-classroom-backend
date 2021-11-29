@@ -19,7 +19,7 @@ export class GradeStructureService {
 
   async getGradeStructures(classroom: Classroom): Promise<GradeStructure[]> {
     const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
-    query.where({ classroom });
+    query.where({ classroom }).orderBy('gradeStructure.order');
 
     try {
       const gradeStructures = await query.getMany();

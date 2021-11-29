@@ -10,7 +10,7 @@ export class GradeStructure extends BaseEntity {
   @Column({ type: 'double precision' })
   grade: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', unique: true })
   order: number;
 
   @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
