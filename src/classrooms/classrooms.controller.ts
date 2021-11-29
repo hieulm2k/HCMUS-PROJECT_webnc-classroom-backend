@@ -23,6 +23,7 @@ import {
 import { Role } from 'src/auth/enum/role.enum';
 import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
+import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -142,6 +143,21 @@ export class ClassroomsController {
     @Body() updateGradeStructure: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
     return this.classroomService.updateGradeStructure(
+      id,
+      gradeId,
+      user,
+      updateGradeStructure,
+    );
+  }
+
+  @Patch('/:id/grade-structures/:gradeId/order')
+  async updateOrderGradeStructure(
+    @Param('id') id: string,
+    @Param('gradeId') gradeId: string,
+    @GetUser() user: User,
+    @Body() updateGradeStructure: UpdateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.updateOrderOfGradeStructure(
       id,
       gradeId,
       user,

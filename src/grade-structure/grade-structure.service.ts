@@ -74,6 +74,17 @@ export class GradeStructureService {
     return this.saveGradeStructure(gradeStructure);
   }
 
+  async updateOrderOfGradeStructure(
+    gradeId: string,
+    classroom: Classroom,
+    order: number,
+  ): Promise<GradeStructure> {
+    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
+    gradeStructure.order = order;
+
+    return this.saveGradeStructure(gradeStructure);
+  }
+
   async saveGradeStructure(
     gradeStructure: GradeStructure,
   ): Promise<GradeStructure> {

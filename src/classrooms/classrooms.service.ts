@@ -23,6 +23,7 @@ import { MailService } from 'src/mail/mail.service';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
+import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
 
 @Injectable()
 export class ClassroomsService {
@@ -111,7 +112,7 @@ export class ClassroomsService {
         createGradeStructureDto,
       );
 
-    await this.updateGradeStructures(classroom, gradeStructure);
+    await this.updateGradeStructuresOfClassroom(classroom, gradeStructure);
     return gradeStructure;
   }
 
@@ -232,6 +233,63 @@ export class ClassroomsService {
     );
   }
 
+  async updateOrderOfGradeStructure(
+    id: string,
+    gradeId: string,
+    user: User,
+    updateGradeStructure: UpdateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    const { order } = updateGradeStructure;
+    const classroom = await this.getClassroomById(id, user);
+    const gradeStructure =
+      await this.gradeStructureService.getGradeStructureById(
+        gradeId,
+        classroom,
+      );
+
+    await this.handleBeforeChangeOrderGradeStructure(
+      id,
+      user,
+      gradeStructure.order,
+      order,
+    );
+
+    return this.gradeStructureService.updateOrderOfGradeStructure(
+      gradeId,
+      classroom,
+      order,
+    );
+  }
+
+  async handleBeforeChangeOrderGradeStructure(
+    id: string,
+    user: User,
+    oldOrder: number,
+    newOrder: number,
+  ): Promise<void> {
+    if (oldOrder === newOrder) {
+      return;
+    }
+
+    const gradeStructures = await this.getGradeStructures(id, user);
+
+    if (newOrder > gradeStructures.length) {
+      throw new BadRequestException(`New order "${newOrder}" is out of range`);
+    }
+
+    if (newOrder < oldOrder) {
+      for (let i = newOrder - 1; i < oldOrder - 1; ++i) {
+        gradeStructures[i].order++;
+        await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
+      }
+    } else if (newOrder > oldOrder) {
+      for (let i = oldOrder; i < newOrder; ++i) {
+        gradeStructures[i].order--;
+        await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
+      }
+    }
+  }
+
   async updateJoinClassrooms(
     classroom: Classroom,
     joinClassroom: JoinClassroom,
@@ -246,7 +304,7 @@ export class ClassroomsService {
     return;
   }
 
-  async updateGradeStructures(
+  async updateGradeStructuresOfClassroom(
     classroom: Classroom,
     gradeStructure: GradeStructure,
   ): Promise<void> {
@@ -263,7 +321,7 @@ export class ClassroomsService {
     return;
   }
 
-  async updateOrderInGradeStructure(id: string, user: User): Promise<void> {
+  async updateOrderInGradeStructureList(id: string, user: User): Promise<void> {
     const gradeStructures = await this.getGradeStructures(id, user);
     for (let i = 0; i < gradeStructures.length; ++i) {
       gradeStructures[i].order = i + 1;
@@ -289,6 +347,6 @@ export class ClassroomsService {
   ): Promise<void> {
     await this.getClassroomById(id, user);
     await this.gradeStructureService.deleteGradeStructure(gradeId);
-    await this.updateOrderInGradeStructure(id, user);
+    await this.updateOrderInGradeStructureList(id, user);
   }
 }
