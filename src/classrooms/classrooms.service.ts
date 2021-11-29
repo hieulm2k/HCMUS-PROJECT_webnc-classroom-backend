@@ -218,6 +218,20 @@ export class ClassroomsService {
     return classroom;
   }
 
+  async updateGradeStructure(
+    id: string,
+    gradeId: string,
+    user: User,
+    updateGradeStructure: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    const classroom = await this.getClassroomById(id, user);
+    return this.gradeStructureService.updateGradeStructure(
+      gradeId,
+      classroom,
+      updateGradeStructure,
+    );
+  }
+
   async updateJoinClassrooms(
     classroom: Classroom,
     joinClassroom: JoinClassroom,

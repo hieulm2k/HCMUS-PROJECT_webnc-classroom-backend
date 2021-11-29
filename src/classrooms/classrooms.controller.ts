@@ -133,4 +133,19 @@ export class ClassroomsController {
       createGradeStructureDto,
     );
   }
+
+  @Patch('/:id/grade-structures/:gradeId')
+  async updateGradeStructure(
+    @Param('id') id: string,
+    @Param('gradeId') gradeId: string,
+    @GetUser() user: User,
+    @Body() updateGradeStructure: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.updateGradeStructure(
+      id,
+      gradeId,
+      user,
+      updateGradeStructure,
+    );
+  }
 }
