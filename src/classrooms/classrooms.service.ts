@@ -263,6 +263,14 @@ export class ClassroomsService {
     return;
   }
 
+  async updateOrderInGradeStructure(id: string, user: User): Promise<void> {
+    const gradeStructures = await this.getGradeStructures(id, user);
+    for (let i = 0; i < gradeStructures.length; ++i) {
+      gradeStructures[i].order = i + 1;
+      await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
+    }
+  }
+
   async deleteClassroom(id: string, user: User): Promise<void> {
     const classroom = await this.getClassroomById(id, user);
     await this.joinClassroomService.deleteJoinClassroom(classroom);
@@ -272,5 +280,15 @@ export class ClassroomsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Classroom with ID "${id}" not found!`);
     }
+  }
+
+  async deleteGradeStructure(
+    id: string,
+    gradeId: string,
+    user: User,
+  ): Promise<void> {
+    await this.getClassroomById(id, user);
+    await this.gradeStructureService.deleteGradeStructure(gradeId);
+    await this.updateOrderInGradeStructure(id, user);
   }
 }

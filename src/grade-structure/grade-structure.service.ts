@@ -89,4 +89,12 @@ export class GradeStructureService {
 
     return gradeStructure;
   }
+
+  async deleteGradeStructure(id: string): Promise<void> {
+    const result = await this.gradeStructureRepo.delete({ id });
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Grade structure with ID "${id}" not found!`);
+    }
+  }
 }

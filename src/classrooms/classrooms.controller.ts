@@ -148,4 +148,13 @@ export class ClassroomsController {
       updateGradeStructure,
     );
   }
+
+  @Delete('/:id/grade-structures/:gradeId')
+  async deleteGradeStructure(
+    @Param('id') id: string,
+    @Param('gradeId') gradeId: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.classroomService.deleteGradeStructure(id, gradeId, user);
+  }
 }
