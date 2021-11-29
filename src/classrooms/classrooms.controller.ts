@@ -21,19 +21,15 @@ import {
   InviteJoinClassroomDto,
 } from './dto/invite-join-classroom.dto';
 import { Role } from 'src/auth/enum/role.enum';
-import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
-import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
+import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
+import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access-token')
 export class ClassroomsController {
-  constructor(
-    private classroomService: ClassroomsService,
-    private joinClassroomService: JoinClassroomService,
-    private gradeStructureService: GradeStructureService,
-  ) {}
+  constructor(private classroomService: ClassroomsService) {}
 
   @Get()
   getClassrooms(@GetUser() user: User): Promise<object[]> {
@@ -46,10 +42,7 @@ export class ClassroomsController {
     @GetUser() user: User,
   ): Promise<object> {
     const classroom = await this.classroomService.getClassroomById(id, user);
-    const teachers = await this.joinClassroomService.getMembersByRole(
-      classroom,
-      Role.TEACHER,
-    );
+    const teachers = await this.classroomService.getTeachers(id, user);
 
     return {
       classroom,
@@ -61,7 +54,7 @@ export class ClassroomsController {
   createClassroom(
     @Body() createClassroomDto: CreateClassroomDto,
     @GetUser() user: User,
-  ): Promise<object> {
+  ): Promise<Classroom> {
     return this.classroomService.createClassroom(createClassroomDto, user);
   }
 
@@ -88,15 +81,6 @@ export class ClassroomsController {
     @GetUser() user: User,
   ): Promise<object> {
     return this.classroomService.getMembers(id, user);
-  }
-
-  @Get('/:id/grade-structure')
-  async getGradeStructure(
-    @Param('id') id: string,
-    @GetUser() user: User,
-  ): Promise<object> {
-    const classroom = await this.classroomService.getClassroomById(id, user);
-    return this.gradeStructureService.getGradeStructure(classroom);
   }
 
   @Get('/:id/join')
@@ -126,6 +110,27 @@ export class ClassroomsController {
       id,
       user,
       inviteJoinClassroomByEmailDto,
+    );
+  }
+
+  @Get('/:id/grade-structures')
+  async getGradeStructures(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<GradeStructure[]> {
+    return this.classroomService.getGradeStructures(id, user);
+  }
+
+  @Post('/:id/grade-structures')
+  async createGradeStructure(
+    @Param('id') id: string,
+    @GetUser() user: User,
+    @Body() createGradeStructureDto: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.createGradeStructure(
+      id,
+      user,
+      createGradeStructureDto,
     );
   }
 }

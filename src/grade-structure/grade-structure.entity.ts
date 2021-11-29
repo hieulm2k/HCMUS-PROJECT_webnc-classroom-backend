@@ -11,7 +11,7 @@ export class GradeStructure extends BaseEntity {
   grade: number;
 
   @Column({ type: 'int' })
-  priority: number;
+  order: number;
 
   @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
     eager: false,

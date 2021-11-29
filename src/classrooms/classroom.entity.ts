@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
@@ -30,6 +31,7 @@ export class Classroom extends BaseEntity {
       eager: true,
     },
   )
+  @Exclude({ toPlainOnly: true })
   joinClassrooms: JoinClassroom[];
 
   @OneToMany(
@@ -39,5 +41,6 @@ export class Classroom extends BaseEntity {
       eager: true,
     },
   )
+  @Exclude({ toPlainOnly: true })
   gradeStructures: GradeStructure[];
 }
