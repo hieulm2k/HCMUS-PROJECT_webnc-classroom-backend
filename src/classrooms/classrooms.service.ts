@@ -73,10 +73,12 @@ export class ClassroomsService {
     user: User,
     param?: GetGradeStructureParam,
   ): Promise<GradeStructure[]> {
-    const { edit } = param;
+    if (param) {
+      const { edit } = param;
 
-    if (String(edit) === 'true') {
-      await this.avoidStudent(id, user);
+      if (String(edit) === 'true') {
+        await this.avoidStudent(id, user);
+      }
     }
 
     const classroom = await this.getClassroomById(id, user);
