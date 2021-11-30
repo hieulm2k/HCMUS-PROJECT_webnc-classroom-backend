@@ -24,6 +24,7 @@ import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
+import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
 
 @Injectable()
 export class ClassroomsService {
@@ -67,7 +68,17 @@ export class ClassroomsService {
     return teachers;
   }
 
-  async getGradeStructures(id: string, user: User): Promise<GradeStructure[]> {
+  async getGradeStructures(
+    id: string,
+    user: User,
+    param?: GetGradeStructureParam,
+  ): Promise<GradeStructure[]> {
+    const { edit } = param;
+
+    if (String(edit) === 'true') {
+      await this.avoidStudent(id, user);
+    }
+
     const classroom = await this.getClassroomById(id, user);
     return this.gradeStructureService.getGradeStructures(classroom);
   }
@@ -197,9 +208,11 @@ export class ClassroomsService {
 
   async avoidStudent(id: string, user: User): Promise<void> {
     const students = await this.getStudents(id, user);
-    if (students.includes(user)) {
-      throw new ForbiddenException();
-    }
+    students.forEach((element) => {
+      if (element.id === user.id) {
+        throw new ForbiddenException('You do not have permission to do this!');
+      }
+    });
   }
 
   async updateClassroom(

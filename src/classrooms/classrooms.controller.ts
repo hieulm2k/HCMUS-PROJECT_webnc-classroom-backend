@@ -24,6 +24,7 @@ import { Role } from 'src/auth/enum/role.enum';
 import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
+import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -118,8 +119,9 @@ export class ClassroomsController {
   async getGradeStructures(
     @Param('id') id: string,
     @GetUser() user: User,
+    @Query() param?: GetGradeStructureParam,
   ): Promise<GradeStructure[]> {
-    return this.classroomService.getGradeStructures(id, user);
+    return this.classroomService.getGradeStructures(id, user, param);
   }
 
   @Post('/:id/grade-structures')
