@@ -45,14 +45,39 @@ export class GradeStructureService {
     }
   }
 
+  async getGradeStructureByName(
+    name: string,
+    classroom: Classroom,
+  ): Promise<GradeStructure> {
+    const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
+    query.where({ classroom }).andWhere({ name });
+
+    try {
+      return await query.getOne();
+    } catch (error) {
+      throw new NotFoundException();
+    }
+  }
+
   async createGradeStructure(
     classroom: Classroom,
     createGradeStructureDto: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
     const { name, grade } = createGradeStructureDto;
+    let gradeStructure;
+
+    gradeStructure = await this.getGradeStructureByName(name, classroom);
+
+    if (gradeStructure) {
+      throw new BadRequestException(
+        `Grade structure with name "${name} of "classroom with ID "${classroom.id} is already exists"!`,
+      );
+    }
+
+    // If not found a grade structure with name
     const gradeStructures = await this.getGradeStructures(classroom);
 
-    const gradeStructure = this.gradeStructureRepo.create({
+    gradeStructure = this.gradeStructureRepo.create({
       name,
       grade,
       order: gradeStructures.length + 1,

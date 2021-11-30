@@ -4,7 +4,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class GradeStructure extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   name: string;
 
   @Column({ type: 'double precision' })
