@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotAcceptableException,
@@ -19,6 +20,11 @@ import {
   InviteJoinClassroomDto,
 } from './dto/invite-join-classroom.dto';
 import { MailService } from 'src/mail/mail.service';
+import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
+import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
+import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
+import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
+import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
 
 @Injectable()
 export class ClassroomsService {
@@ -28,6 +34,7 @@ export class ClassroomsService {
     private joinClassroomService: JoinClassroomService,
     private userService: UserService,
     private mailService: MailService,
+    private gradeStructureService: GradeStructureService,
   ) {}
 
   async getClassrooms(user: User): Promise<object[]> {
@@ -61,6 +68,67 @@ export class ClassroomsService {
     return teachers;
   }
 
+  async getGradeStructures(
+    id: string,
+    user: User,
+    param?: GetGradeStructureParam,
+  ): Promise<GradeStructure[]> {
+    if (param) {
+      const { edit } = param;
+
+      if (String(edit) === 'true') {
+        await this.avoidStudent(id, user);
+      }
+    }
+
+    const classroom = await this.getClassroomById(id, user);
+    return this.gradeStructureService.getGradeStructures(classroom);
+  }
+
+  async getClassroomById(id: string, user: User): Promise<Classroom> {
+    const found = await this.classroomsRepository.findOne({ id });
+
+    if (!found) {
+      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+    } else {
+      await this.joinClassroomService.getClassroomByUser(found, user);
+      return found;
+    }
+  }
+
+  async createClassroom(
+    createClassroomDto: CreateClassroomDto,
+    user: User,
+  ): Promise<Classroom> {
+    const joinClassroom = await this.joinClassroomService.createJoinClassroom([
+      Role.OWNER,
+      Role.TEACHER,
+    ]);
+    await this.userService.updateJoinClassroom(user, joinClassroom);
+    const classroom = await this.classroomsRepository.createClassroom(
+      createClassroomDto,
+    );
+    await this.updateJoinClassrooms(classroom, joinClassroom);
+    return classroom;
+  }
+
+  async createGradeStructure(
+    id: string,
+    user: User,
+    createGradeStructureDto: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    await this.avoidStudent(id, user);
+    const classroom = await this.getClassroomById(id, user);
+    const gradeStructure =
+      await this.gradeStructureService.createGradeStructure(
+        classroom,
+        createGradeStructureDto,
+      );
+
+    await this.updateGradeStructuresOfClassroom(classroom, gradeStructure);
+    return gradeStructure;
+  }
+
   async joinClassroomByCode(
     id: string,
     user: User,
@@ -92,7 +160,7 @@ export class ClassroomsService {
         [role],
       );
 
-      await this.updateJoinClassroom(classroom, joinClassroom);
+      await this.updateJoinClassrooms(classroom, joinClassroom);
       await this.userService.updateJoinClassroom(user, joinClassroom);
       return;
     }
@@ -140,40 +208,13 @@ export class ClassroomsService {
     );
   }
 
-  async getClassroomById(id: string, user: User): Promise<Classroom> {
-    const found = await this.classroomsRepository.findOne({ id });
-
-    if (!found) {
-      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
-    } else {
-      return await this.joinClassroomService.getClassroomByUser(found, user);
-    }
-  }
-
-  async createClassroom(
-    createClassroomDto: CreateClassroomDto,
-    user: User,
-  ): Promise<object> {
-    const joinClassroom = await this.joinClassroomService.createJoinClassroom([
-      Role.OWNER,
-      Role.TEACHER,
-    ]);
-    await this.userService.updateJoinClassroom(user, joinClassroom);
-    const classroom = await this.classroomsRepository.createClassroom(
-      createClassroomDto,
-    );
-    return this.updateJoinClassroom(classroom, joinClassroom);
-  }
-
-  async deleteClassroom(id: string, user: User): Promise<void> {
-    const classroom = await this.getClassroomById(id, user);
-    await this.joinClassroomService.deleteJoinClassroom(classroom);
-
-    const result = await this.classroomsRepository.delete(classroom.id);
-
-    if (result.affected === 0) {
-      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
-    }
+  async avoidStudent(id: string, user: User): Promise<void> {
+    const students = await this.getStudents(id, user);
+    students.forEach((element) => {
+      if (element.id === user.id) {
+        throw new ForbiddenException('You do not have permission to do this!');
+      }
+    });
   }
 
   async updateClassroom(
@@ -193,24 +234,134 @@ export class ClassroomsService {
     return classroom;
   }
 
-  async updateJoinClassroom(
+  async updateGradeStructure(
+    id: string,
+    gradeId: string,
+    user: User,
+    updateGradeStructure: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    const classroom = await this.getClassroomById(id, user);
+    return this.gradeStructureService.updateGradeStructure(
+      gradeId,
+      classroom,
+      updateGradeStructure,
+    );
+  }
+
+  async updateOrderOfGradeStructure(
+    id: string,
+    gradeId: string,
+    user: User,
+    updateGradeStructure: UpdateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    const { order } = updateGradeStructure;
+    const classroom = await this.getClassroomById(id, user);
+    const gradeStructure =
+      await this.gradeStructureService.getGradeStructureById(
+        gradeId,
+        classroom,
+      );
+
+    await this.handleBeforeChangeOrderGradeStructure(
+      id,
+      user,
+      gradeStructure.order,
+      order,
+    );
+
+    return this.gradeStructureService.updateOrderOfGradeStructure(
+      gradeId,
+      classroom,
+      order,
+    );
+  }
+
+  async handleBeforeChangeOrderGradeStructure(
+    id: string,
+    user: User,
+    oldOrder: number,
+    newOrder: number,
+  ): Promise<void> {
+    if (oldOrder === newOrder) {
+      return;
+    }
+
+    const gradeStructures = await this.getGradeStructures(id, user);
+
+    if (newOrder > gradeStructures.length) {
+      throw new BadRequestException(`New order "${newOrder}" is out of range`);
+    }
+
+    if (newOrder < oldOrder) {
+      for (let i = newOrder - 1; i < oldOrder - 1; ++i) {
+        gradeStructures[i].order++;
+        await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
+      }
+    } else if (newOrder > oldOrder) {
+      for (let i = oldOrder; i < newOrder; ++i) {
+        gradeStructures[i].order--;
+        await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
+      }
+    }
+  }
+
+  async updateJoinClassrooms(
     classroom: Classroom,
     joinClassroom: JoinClassroom,
-  ): Promise<object> {
+  ): Promise<void> {
     if (classroom.joinClassrooms === undefined) {
       classroom.joinClassrooms = [joinClassroom];
     } else {
       classroom.joinClassrooms = [...classroom.joinClassrooms, joinClassroom];
     }
+
     await this.classroomsRepository.save(classroom);
-    return {
-      id: classroom.id,
-      code: classroom.code,
-      name: classroom.name,
-      description: classroom.description,
-      section: classroom.section,
-      subject: classroom.subject,
-      room: classroom.room,
-    };
+    return;
+  }
+
+  async updateGradeStructuresOfClassroom(
+    classroom: Classroom,
+    gradeStructure: GradeStructure,
+  ): Promise<void> {
+    if (classroom.gradeStructures === undefined) {
+      classroom.gradeStructures = [gradeStructure];
+    } else {
+      classroom.gradeStructures = [
+        ...classroom.gradeStructures,
+        gradeStructure,
+      ];
+    }
+
+    await this.classroomsRepository.save(classroom);
+    return;
+  }
+
+  async updateOrderInGradeStructureList(id: string, user: User): Promise<void> {
+    const gradeStructures = await this.getGradeStructures(id, user);
+    for (let i = 0; i < gradeStructures.length; ++i) {
+      gradeStructures[i].order = i + 1;
+      await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
+    }
+  }
+
+  async deleteClassroom(id: string, user: User): Promise<void> {
+    const classroom = await this.getClassroomById(id, user);
+    await this.joinClassroomService.deleteJoinClassroom(classroom);
+
+    const result = await this.classroomsRepository.delete(classroom.id);
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+    }
+  }
+
+  async deleteGradeStructure(
+    id: string,
+    gradeId: string,
+    user: User,
+  ): Promise<void> {
+    await this.getClassroomById(id, user);
+    await this.gradeStructureService.deleteGradeStructure(gradeId);
+    await this.updateOrderInGradeStructureList(id, user);
   }
 }

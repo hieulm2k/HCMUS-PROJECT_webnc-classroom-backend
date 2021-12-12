@@ -21,18 +21,17 @@ import {
   InviteJoinClassroomDto,
 } from './dto/invite-join-classroom.dto';
 import { Role } from 'src/auth/enum/role.enum';
-import { IsEmail } from 'class-validator';
-import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-structure.dto';
+import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
+import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
+import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access-token')
 export class ClassroomsController {
-  constructor(
-    private classroomService: ClassroomsService,
-    private joinClassroomService: JoinClassroomService,
-  ) {}
+  constructor(private classroomService: ClassroomsService) {}
 
   @Get()
   getClassrooms(@GetUser() user: User): Promise<object[]> {
@@ -45,15 +44,37 @@ export class ClassroomsController {
     @GetUser() user: User,
   ): Promise<object> {
     const classroom = await this.classroomService.getClassroomById(id, user);
-    const teachers = await this.joinClassroomService.getMembersByRole(
-      classroom,
-      Role.TEACHER,
-    );
+    const teachers = await this.classroomService.getTeachers(id, user);
 
     return {
       classroom,
       teachers: teachers,
     };
+  }
+
+  @Post()
+  createClassroom(
+    @Body() createClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
+  ): Promise<Classroom> {
+    return this.classroomService.createClassroom(createClassroomDto, user);
+  }
+
+  @Patch('/:id')
+  updateClassroom(
+    @Param('id') id: string,
+    @Body() updateClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
+  ): Promise<Classroom> {
+    return this.classroomService.updateClassroom(id, updateClassroomDto, user);
+  }
+
+  @Delete('/:id')
+  deleteClassroom(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.classroomService.deleteClassroom(id, user);
   }
 
   @Get('/:id/members')
@@ -94,28 +115,64 @@ export class ClassroomsController {
     );
   }
 
-  @Post()
-  createClassroom(
-    @Body() createClassroomDto: CreateClassroomDto,
+  @Get('/:id/grade-structures')
+  async getGradeStructures(
+    @Param('id') id: string,
     @GetUser() user: User,
-  ): Promise<object> {
-    return this.classroomService.createClassroom(createClassroomDto, user);
+    @Query() param?: GetGradeStructureParam,
+  ): Promise<GradeStructure[]> {
+    return this.classroomService.getGradeStructures(id, user, param);
   }
 
-  @Delete('/:id')
-  deleteClassroom(
+  @Post('/:id/grade-structures')
+  async createGradeStructure(
     @Param('id') id: string,
+    @GetUser() user: User,
+    @Body() createGradeStructureDto: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.createGradeStructure(
+      id,
+      user,
+      createGradeStructureDto,
+    );
+  }
+
+  @Patch('/:id/grade-structures/:gradeId')
+  async updateGradeStructure(
+    @Param('id') id: string,
+    @Param('gradeId') gradeId: string,
+    @GetUser() user: User,
+    @Body() updateGradeStructure: CreateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.updateGradeStructure(
+      id,
+      gradeId,
+      user,
+      updateGradeStructure,
+    );
+  }
+
+  @Patch('/:id/grade-structures/:gradeId/order')
+  async updateOrderGradeStructure(
+    @Param('id') id: string,
+    @Param('gradeId') gradeId: string,
+    @GetUser() user: User,
+    @Body() updateGradeStructure: UpdateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.updateOrderOfGradeStructure(
+      id,
+      gradeId,
+      user,
+      updateGradeStructure,
+    );
+  }
+
+  @Delete('/:id/grade-structures/:gradeId')
+  async deleteGradeStructure(
+    @Param('id') id: string,
+    @Param('gradeId') gradeId: string,
     @GetUser() user: User,
   ): Promise<void> {
-    return this.classroomService.deleteClassroom(id, user);
-  }
-
-  @Patch('/:id')
-  updateClassroom(
-    @Param('id') id: string,
-    @Body() updateClassroomDto: CreateClassroomDto,
-    @GetUser() user: User,
-  ): Promise<Classroom> {
-    return this.classroomService.updateClassroom(id, updateClassroomDto, user);
+    return this.classroomService.deleteGradeStructure(id, gradeId, user);
   }
 }
