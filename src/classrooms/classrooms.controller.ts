@@ -38,6 +38,14 @@ export class ClassroomsController {
     return this.classroomService.getClassrooms(user);
   }
 
+  @Post()
+  createClassroom(
+    @Body() createClassroomDto: CreateClassroomDto,
+    @GetUser() user: User,
+  ): Promise<Classroom> {
+    return this.classroomService.createClassroom(createClassroomDto, user);
+  }
+
   @Get('/:id')
   async getClassroomById(
     @Param('id') id: string,
@@ -50,14 +58,6 @@ export class ClassroomsController {
       classroom,
       teachers: teachers,
     };
-  }
-
-  @Post()
-  createClassroom(
-    @Body() createClassroomDto: CreateClassroomDto,
-    @GetUser() user: User,
-  ): Promise<Classroom> {
-    return this.classroomService.createClassroom(createClassroomDto, user);
   }
 
   @Patch('/:id')
@@ -137,42 +137,42 @@ export class ClassroomsController {
     );
   }
 
-  @Patch('/:id/grade-structures/:gradeId')
+  @Patch('/:id/grade-structures/:structureId')
   async updateGradeStructure(
     @Param('id') id: string,
-    @Param('gradeId') gradeId: string,
+    @Param('structureId') structureId: string,
     @GetUser() user: User,
     @Body() updateGradeStructure: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
     return this.classroomService.updateGradeStructure(
       id,
-      gradeId,
+      structureId,
       user,
       updateGradeStructure,
     );
   }
 
-  @Patch('/:id/grade-structures/:gradeId/order')
+  @Delete('/:id/grade-structures/:structureId')
+  async deleteGradeStructure(
+    @Param('id') id: string,
+    @Param('structureId') structureId: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.classroomService.deleteGradeStructure(id, structureId, user);
+  }
+
+  @Patch('/:id/grade-structures/:structureId/order')
   async updateOrderGradeStructure(
     @Param('id') id: string,
-    @Param('gradeId') gradeId: string,
+    @Param('structureId') structureId: string,
     @GetUser() user: User,
     @Body() updateGradeStructure: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
     return this.classroomService.updateOrderOfGradeStructure(
       id,
-      gradeId,
+      structureId,
       user,
       updateGradeStructure,
     );
-  }
-
-  @Delete('/:id/grade-structures/:gradeId')
-  async deleteGradeStructure(
-    @Param('id') id: string,
-    @Param('gradeId') gradeId: string,
-    @GetUser() user: User,
-  ): Promise<void> {
-    return this.classroomService.deleteGradeStructure(id, gradeId, user);
   }
 }
