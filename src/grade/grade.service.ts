@@ -58,15 +58,34 @@ export class GradeService {
     });
   }
 
-  async deleteDuplicateStudent(
-    createStudentListDtos: CreateStudentListDto[],
-  ): Promise<CreateStudentListDto[]> {
+  async deleteDuplicateStudent(createStudentListDtos: any[]): Promise<any[]> {
     return createStudentListDtos.filter(
-      (student, index, self) =>
+      (item, index, self) =>
         index ===
         self.findIndex(
-          (s) => s.name === student.name && s.studentId === student.studentId,
+          (s) => s.name === item.name && s.studentId === item.studentId,
         ),
     );
+  }
+
+  async createGradeWithNewGradeStructure(
+    classroomId: string,
+    assignment: GradeStructure,
+  ): Promise<void> {
+    let grades = await this.getAllGrades(classroomId);
+    grades = await this.deleteDuplicateStudent(grades);
+
+    assignment.grades = [];
+
+    grades.forEach(async (grade) => {
+      const newGrade = this.gradeRepo.create({
+        studentId: grade.studentId,
+        name: grade.name,
+      });
+
+      await this.gradeRepo.save(newGrade);
+      assignment.grades = [...assignment.grades, newGrade];
+      await this.gradeStructureService.saveGradeStructure(assignment);
+    });
   }
 }

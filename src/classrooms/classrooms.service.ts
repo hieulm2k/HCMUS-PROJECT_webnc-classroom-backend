@@ -128,6 +128,11 @@ export class ClassroomsService {
         createGradeStructureDto,
       );
 
+    await this.gradeService.createGradeWithNewGradeStructure(
+      id,
+      gradeStructure,
+    );
+
     await this.updateGradeStructuresOfClassroom(classroom, gradeStructure);
     return gradeStructure;
   }
