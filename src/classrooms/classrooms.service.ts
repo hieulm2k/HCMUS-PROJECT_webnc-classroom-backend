@@ -25,6 +25,8 @@ import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-st
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
 import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
+import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
+import { GradeService } from 'src/grade/grade.service';
 
 @Injectable()
 export class ClassroomsService {
@@ -35,6 +37,7 @@ export class ClassroomsService {
     private userService: UserService,
     private mailService: MailService,
     private gradeStructureService: GradeStructureService,
+    private gradeService: GradeService,
   ) {}
 
   async getClassrooms(user: User): Promise<object[]> {
@@ -77,7 +80,7 @@ export class ClassroomsService {
       const { edit } = param;
 
       if (String(edit) === 'true') {
-        await this.avoidStudent(id, user);
+        await this.preventStudent(id, user);
       }
     }
 
@@ -117,7 +120,7 @@ export class ClassroomsService {
     user: User,
     createGradeStructureDto: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
-    await this.avoidStudent(id, user);
+    await this.preventStudent(id, user);
     const classroom = await this.getClassroomById(id, user);
     const gradeStructure =
       await this.gradeStructureService.createGradeStructure(
@@ -127,6 +130,34 @@ export class ClassroomsService {
 
     await this.updateGradeStructuresOfClassroom(classroom, gradeStructure);
     return gradeStructure;
+  }
+
+  async createStudentList(
+    id: string,
+    user: User,
+    createStudentListDtos: CreateStudentListDto[],
+  ): Promise<GradeStructure> {
+    await this.preventStudent(id, user);
+
+    const classroom = await this.getClassroomById(id, user);
+
+    if (classroom.gradeStructures.length === 0) {
+      throw new BadRequestException('Please create grade structure first');
+    }
+
+    const grades = await this.gradeService.getAllGrades(classroom.id);
+
+    if (grades.length !== 0) {
+      // Delete all grades
+      await this.gradeService.removeAllGrades(classroom.id);
+    }
+
+    await this.gradeService.createStudentList(
+      createStudentListDtos,
+      classroom.gradeStructures,
+    );
+
+    return null;
   }
 
   async joinClassroomByCode(
@@ -208,7 +239,7 @@ export class ClassroomsService {
     );
   }
 
-  async avoidStudent(id: string, user: User): Promise<void> {
+  async preventStudent(id: string, user: User): Promise<void> {
     const students = await this.getStudents(id, user);
     students.forEach((element) => {
       if (element.id === user.id) {
@@ -360,7 +391,16 @@ export class ClassroomsService {
     gradeId: string,
     user: User,
   ): Promise<void> {
-    await this.getClassroomById(id, user);
+    const classroom = await this.getClassroomById(id, user);
+    const gradeStructure =
+      await this.gradeStructureService.getGradeStructureById(
+        gradeId,
+        classroom,
+      );
+
+    gradeStructure.grades = [];
+    await this.gradeStructureService.saveGradeStructure(gradeStructure);
+
     await this.gradeStructureService.deleteGradeStructure(gradeId);
     await this.updateOrderInGradeStructureList(id, user);
   }

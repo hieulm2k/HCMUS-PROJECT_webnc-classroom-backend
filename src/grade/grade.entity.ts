@@ -4,13 +4,13 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Grade extends BaseEntity {
-  @Column({ unique: true })
+  @Column()
   studentId: string;
 
   @Column()
   name: string;
 
-  @Column({ type: 'double precision' })
+  @Column({ type: 'double precision', nullable: true, default: null })
   grade: number;
 
   @ManyToOne(
@@ -18,6 +18,7 @@ export class Grade extends BaseEntity {
     (gradeStructure) => gradeStructure.grades,
     {
       eager: false,
+      orphanedRowAction: 'delete',
     },
   )
   @JoinColumn()

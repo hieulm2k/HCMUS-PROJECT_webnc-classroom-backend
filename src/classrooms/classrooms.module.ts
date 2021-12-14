@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GradeStructureModule } from 'src/grade-structure/grade-structure.module';
+import { GradeModule } from 'src/grade/grade.module';
 import { JoinClassroomModule } from 'src/join-classroom/join-classroom.module';
 import { MailModule } from 'src/mail/mail.module';
 import { UserModule } from 'src/user/user.module';
@@ -17,6 +18,7 @@ import { ClassroomsService } from './classrooms.service';
     UserModule,
     MailModule,
     GradeStructureModule,
+    GradeModule,
   ],
   controllers: [ClassroomsController],
   providers: [ClassroomsService],

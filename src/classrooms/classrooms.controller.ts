@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseArrayPipe,
   Patch,
   Post,
   Query,
@@ -25,6 +26,7 @@ import { CreateGradeStructureDto } from 'src/grade-structure/dto/create-grade-st
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
 import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
+import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -134,6 +136,20 @@ export class ClassroomsController {
       id,
       user,
       createGradeStructureDto,
+    );
+  }
+
+  @Post('/:id/student-list')
+  async createStudentList(
+    @Param('id') id: string,
+    @GetUser() user: User,
+    @Body(new ParseArrayPipe({ items: CreateStudentListDto }))
+    createStudentListDtos: CreateStudentListDto[],
+  ): Promise<GradeStructure> {
+    return this.classroomService.createStudentList(
+      id,
+      user,
+      createStudentListDtos,
     );
   }
 

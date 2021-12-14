@@ -16,7 +16,7 @@ export class User extends BaseEntity {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, default: null })
   studentId: string;
 
   @Column({ default: false })

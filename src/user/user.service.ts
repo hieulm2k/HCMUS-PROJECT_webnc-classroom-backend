@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -57,6 +58,12 @@ export class UserService {
 
     if (found && studentId != user.studentId) {
       throw new ConflictException('Student ID is already exists');
+    }
+
+    if (found.studentId !== null) {
+      throw new BadRequestException(
+        'Cannot update Student ID twice, please contact Admin to update',
+      );
     }
 
     user.name = name;
