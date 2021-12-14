@@ -61,10 +61,7 @@ export class GradeService {
   async deleteDuplicateStudent(createStudentListDtos: any[]): Promise<any[]> {
     return createStudentListDtos.filter(
       (item, index, self) =>
-        index ===
-        self.findIndex(
-          (s) => s.name === item.name && s.studentId === item.studentId,
-        ),
+        index === self.findIndex((s) => s.studentId === item.studentId),
     );
   }
 
