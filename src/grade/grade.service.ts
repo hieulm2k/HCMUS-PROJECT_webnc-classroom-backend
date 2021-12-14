@@ -1,6 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { Repository } from 'typeorm';
@@ -57,5 +56,17 @@ export class GradeService {
         }
       });
     });
+  }
+
+  async deleteDuplicateStudent(
+    createStudentListDtos: CreateStudentListDto[],
+  ): Promise<CreateStudentListDto[]> {
+    return createStudentListDtos.filter(
+      (student, index, self) =>
+        index ===
+        self.findIndex(
+          (s) => s.name === student.name && s.studentId === student.studentId,
+        ),
+    );
   }
 }

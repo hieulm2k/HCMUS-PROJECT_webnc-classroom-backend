@@ -152,6 +152,10 @@ export class ClassroomsService {
       await this.gradeService.removeAllGrades(classroom.id);
     }
 
+    createStudentListDtos = await this.gradeService.deleteDuplicateStudent(
+      createStudentListDtos,
+    );
+
     await this.gradeService.createStudentList(
       createStudentListDtos,
       classroom.gradeStructures,
