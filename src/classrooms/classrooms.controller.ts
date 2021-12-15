@@ -27,6 +27,7 @@ import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-structure.dto';
 import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
 import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
+import { UpdateClassroomDto } from './dto/update-classroom.dto';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -65,7 +66,7 @@ export class ClassroomsController {
   @Patch('/:id')
   updateClassroom(
     @Param('id') id: string,
-    @Body() updateClassroomDto: CreateClassroomDto,
+    @Body() updateClassroomDto: UpdateClassroomDto,
     @GetUser() user: User,
   ): Promise<Classroom> {
     return this.classroomService.updateClassroom(id, updateClassroomDto, user);

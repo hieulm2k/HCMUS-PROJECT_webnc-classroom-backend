@@ -27,6 +27,7 @@ import { UpdateGradeStructureDto } from 'src/grade-structure/dto/update-grade-st
 import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-structure.dto';
 import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 import { GradeService } from 'src/grade/grade.service';
+import { UpdateClassroomDto } from './dto/update-classroom.dto';
 
 @Injectable()
 export class ClassroomsService {
@@ -259,19 +260,14 @@ export class ClassroomsService {
 
   async updateClassroom(
     id: string,
-    updateClassroomDto: CreateClassroomDto,
+    updateClassroomDto: UpdateClassroomDto,
     user: User,
   ): Promise<Classroom> {
-    const { name, description, section, subject, room } = updateClassroomDto;
     const classroom = await this.getClassroomById(id, user);
-
-    classroom.name = name;
-    classroom.description = description;
-    classroom.section = section;
-    classroom.subject = subject;
-    classroom.room = room;
-    await this.classroomsRepository.save(classroom);
-    return classroom;
+    return await this.classroomsRepository.save({
+      ...classroom,
+      ...updateClassroomDto,
+    });
   }
 
   async updateGradeStructure(
