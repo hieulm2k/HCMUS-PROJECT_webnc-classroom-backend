@@ -52,9 +52,7 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
         await query.getOne()
       ).classroom;
     } catch (error) {
-      throw new NotFoundException(
-        `Classroom with ID "${classroom.id}" not found!`,
-      );
+      throw new NotFoundException(`Classroom does not exist!`);
     }
   }
 

@@ -93,7 +93,7 @@ export class ClassroomsService {
     const found = await this.classroomsRepository.findOne({ id });
 
     if (!found) {
-      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+      throw new NotFoundException(`Classroom does not exist!`);
     } else {
       await this.joinClassroomService.getClassroomByUser(found, user);
       return found;
@@ -178,7 +178,7 @@ export class ClassroomsService {
     const classroom = await this.classroomsRepository.findOne({ id });
 
     if (!classroom) {
-      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+      throw new NotFoundException(`Classroom does not exist!`);
     }
 
     try {
@@ -188,9 +188,7 @@ export class ClassroomsService {
       const { code, role } = inviteJoinClassroomDto;
 
       if (code !== classroom.code) {
-        throw new NotAcceptableException(
-          `Code "${code}" not accept by classroom with id "${id}"!`,
-        );
+        throw new NotAcceptableException(`Code "${code}" is not accepted!`);
       }
 
       if (role === Role.OWNER) {
@@ -209,7 +207,7 @@ export class ClassroomsService {
     // if found a classroom that user joined -> throw exception
 
     throw new InternalServerErrorException(
-      'You are already join in this class',
+      'You have already joined this class',
     );
   }
 
@@ -221,7 +219,7 @@ export class ClassroomsService {
     const classroom = await this.classroomsRepository.findOne(id);
 
     if (!classroom) {
-      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+      throw new NotFoundException(`Classroom does not exist!`);
     }
 
     const { email, role } = inviteJoinClassroomByEmailDto;
@@ -245,7 +243,7 @@ export class ClassroomsService {
 
     // if found a classroom that user joined -> throw exception
     throw new InternalServerErrorException(
-      `This user with email "${email}" is already join in this class`,
+      `This user with email "${email}" have already joined this class`,
     );
   }
 
@@ -325,7 +323,7 @@ export class ClassroomsService {
     const gradeStructures = await this.getGradeStructures(id, user);
 
     if (newOrder > gradeStructures.length) {
-      throw new BadRequestException(`New order "${newOrder}" is out of range`);
+      throw new BadRequestException(`New order "${newOrder}" is out of range!`);
     }
 
     if (newOrder < oldOrder) {
@@ -387,7 +385,7 @@ export class ClassroomsService {
     const result = await this.classroomsRepository.delete(classroom.id);
 
     if (result.affected === 0) {
-      throw new NotFoundException(`Classroom with ID "${id}" not found!`);
+      throw new NotFoundException(`Classroom does not exist!`);
     }
   }
 

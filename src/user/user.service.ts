@@ -22,7 +22,7 @@ export class UserService {
     });
 
     if (!found) {
-      throw new NotFoundException(`User not found!`);
+      throw new NotFoundException(`User does not exist!`);
     }
 
     return found;
@@ -34,7 +34,7 @@ export class UserService {
     });
 
     if (!found) {
-      throw new NotFoundException(`User with email "${email}" not found!`);
+      throw new NotFoundException(`User with email "${email}" does not exist!`);
     }
 
     return found;
@@ -64,7 +64,7 @@ export class UserService {
       }
 
       if (found && studentId != user.studentId) {
-        throw new ConflictException('Student ID is already exists!');
+        throw new ConflictException('Student ID already exists!');
       }
     }
 

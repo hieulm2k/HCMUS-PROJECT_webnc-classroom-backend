@@ -39,9 +39,7 @@ export class GradeStructureService {
     try {
       return await query.getOne();
     } catch (error) {
-      throw new NotFoundException(
-        `Not found Grade structure with ID "${id} of "classroom with ID "${classroom.id}"!`,
-      );
+      throw new NotFoundException(`Grade structure does not exist!`);
     }
   }
 
@@ -55,7 +53,7 @@ export class GradeStructureService {
     try {
       return await query.getOne();
     } catch (error) {
-      throw new NotFoundException();
+      throw new NotFoundException(`Grade structure does not exist!`);
     }
   }
 
@@ -69,9 +67,7 @@ export class GradeStructureService {
     gradeStructure = await this.getGradeStructureByName(name, classroom);
 
     if (gradeStructure) {
-      throw new BadRequestException(
-        `Grade structure with name "${name} of "classroom with ID "${classroom.id} is already exists"!`,
-      );
+      throw new BadRequestException(`Grade structure already exists"!`);
     }
 
     // If not found a grade structure with name
@@ -118,7 +114,7 @@ export class GradeStructureService {
     } catch (error) {
       if (error.code === '23505') {
         throw new BadRequestException(
-          `"${gradeStructure.name}" is already exists`,
+          `"${gradeStructure.name}" already exists`,
         );
       }
     }
@@ -130,7 +126,7 @@ export class GradeStructureService {
     const result = await this.gradeStructureRepo.delete({ id });
 
     if (result.affected === 0) {
-      throw new NotFoundException(`Grade structure with ID "${id}" not found!`);
+      throw new NotFoundException(`Grade structure does not exist!`);
     }
   }
 }
