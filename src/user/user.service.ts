@@ -22,7 +22,7 @@ export class UserService {
     });
 
     if (!found) {
-      throw new NotFoundException(`User with ID "${id}" not found!`);
+      throw new NotFoundException(`User not found!`);
     }
 
     return found;
@@ -50,27 +50,25 @@ export class UserService {
   }
 
   async updateUser(user: User, updateUserDto: UpdateUserDto): Promise<User> {
-    const { name, studentId } = updateUserDto;
+    const { studentId } = updateUserDto;
 
-    const found = await this.userRepository.findOne({
-      studentId,
-    });
+    if (studentId) {
+      const found = await this.userRepository.findOne({
+        studentId,
+      });
 
-    if (found && studentId != user.studentId) {
-      throw new ConflictException('Student ID is already exists');
+      if (user.studentId !== null) {
+        throw new BadRequestException(
+          'Cannot update Student ID twice, please contact Admin to update!',
+        );
+      }
+
+      if (found && studentId != user.studentId) {
+        throw new ConflictException('Student ID is already exists!');
+      }
     }
 
-    if (found.studentId !== null) {
-      throw new BadRequestException(
-        'Cannot update Student ID twice, please contact Admin to update',
-      );
-    }
-
-    user.name = name;
-    user.studentId = studentId;
-
-    await this.userRepository.save(user);
-    return user;
+    return await this.userRepository.save({ ...user, ...updateUserDto });
   }
 
   async createWithGoogle(email: string, name: string) {
