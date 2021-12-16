@@ -46,30 +46,30 @@ export class ClassroomsService {
   }
 
   async getMembers(id: string, user: User): Promise<object> {
-    const students = await this.getStudents(id, user);
-    const teachers = await this.getTeachers(id, user);
+    const classroom = await this.getClassroomById(id, user);
+    const students = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.STUDENT,
+    );
+
+    const teachers = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.TEACHER,
+    );
+
     return {
       students,
       teachers,
     };
   }
 
-  async getStudents(id: string, user: User): Promise<User[]> {
+  async getOwners(id: string, user: User): Promise<User[]> {
     const classroom = await this.getClassroomById(id, user);
-    const students = await this.joinClassroomService.getMembersByRole(
+    const owners = await this.joinClassroomService.getMembersByRole(
       classroom,
-      Role.STUDENT,
+      Role.OWNER,
     );
-    return students;
-  }
-
-  async getTeachers(id: string, user: User): Promise<User[]> {
-    const classroom = await this.getClassroomById(id, user);
-    const teachers = await this.joinClassroomService.getMembersByRole(
-      classroom,
-      Role.TEACHER,
-    );
-    return teachers;
+    return owners;
   }
 
   async getGradeStructures(
@@ -77,15 +77,16 @@ export class ClassroomsService {
     user: User,
     param?: GetGradeStructureParam,
   ): Promise<GradeStructure[]> {
+    const classroom = await this.getClassroomById(id, user);
+
     if (param) {
       const { edit } = param;
 
       if (String(edit) === 'true') {
-        await this.preventStudent(id, user);
+        await this.preventStudent(classroom, user);
       }
     }
 
-    const classroom = await this.getClassroomById(id, user);
     return this.gradeStructureService.getGradeStructures(classroom);
   }
 
@@ -121,8 +122,9 @@ export class ClassroomsService {
     user: User,
     createGradeStructureDto: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
-    await this.preventStudent(id, user);
     const classroom = await this.getClassroomById(id, user);
+    await this.preventStudent(classroom, user);
+
     const gradeStructure =
       await this.gradeStructureService.createGradeStructure(
         classroom,
@@ -143,9 +145,8 @@ export class ClassroomsService {
     user: User,
     createStudentListDtos: CreateStudentListDto[],
   ): Promise<GradeStructure> {
-    await this.preventStudent(id, user);
-
     const classroom = await this.getClassroomById(id, user);
+    await this.acceptOnlyOwner(classroom, user);
 
     if (classroom.gradeStructures.length === 0) {
       throw new BadRequestException('Please create grade structure first');
@@ -247,21 +248,14 @@ export class ClassroomsService {
     );
   }
 
-  async preventStudent(id: string, user: User): Promise<void> {
-    const students = await this.getStudents(id, user);
-    students.forEach((element) => {
-      if (element.id === user.id) {
-        throw new ForbiddenException('You do not have permission to do this!');
-      }
-    });
-  }
-
   async updateClassroom(
     id: string,
     updateClassroomDto: UpdateClassroomDto,
     user: User,
   ): Promise<Classroom> {
     const classroom = await this.getClassroomById(id, user);
+    await this.acceptOnlyOwner(classroom, user);
+
     return await this.classroomsRepository.save({
       ...classroom,
       ...updateClassroomDto,
@@ -275,6 +269,8 @@ export class ClassroomsService {
     updateGradeStructure: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
     const classroom = await this.getClassroomById(id, user);
+    await this.preventStudent(classroom, user);
+
     return this.gradeStructureService.updateGradeStructure(
       gradeId,
       classroom,
@@ -290,6 +286,8 @@ export class ClassroomsService {
   ): Promise<GradeStructure> {
     const { order } = updateGradeStructure;
     const classroom = await this.getClassroomById(id, user);
+    await this.preventStudent(classroom, user);
+
     const gradeStructure =
       await this.gradeStructureService.getGradeStructureById(
         gradeId,
@@ -380,6 +378,7 @@ export class ClassroomsService {
 
   async deleteClassroom(id: string, user: User): Promise<void> {
     const classroom = await this.getClassroomById(id, user);
+    await this.acceptOnlyOwner(classroom, user);
     await this.joinClassroomService.deleteJoinClassroom(classroom);
 
     const result = await this.classroomsRepository.delete(classroom.id);
@@ -395,6 +394,7 @@ export class ClassroomsService {
     user: User,
   ): Promise<void> {
     const classroom = await this.getClassroomById(id, user);
+    await this.preventStudent(classroom, user);
     const gradeStructure =
       await this.gradeStructureService.getGradeStructureById(
         gradeId,
@@ -406,5 +406,38 @@ export class ClassroomsService {
 
     await this.gradeStructureService.deleteGradeStructure(gradeId);
     await this.updateOrderInGradeStructureList(id, user);
+  }
+
+  async preventStudent(classroom: Classroom, user: User): Promise<void> {
+    const students = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.STUDENT,
+    );
+
+    students.forEach((element) => {
+      if (element.id === user.id) {
+        throw new ForbiddenException('You do not have permission to do this!');
+      }
+    });
+  }
+
+  async acceptOnlyOwner(classroom: Classroom, user: User): Promise<void> {
+    const owners = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.OWNER,
+    );
+
+    let isOwner = false;
+
+    owners.forEach((owner) => {
+      if (owner.id === user.id) {
+        isOwner = true;
+        return;
+      }
+    });
+
+    if (!isOwner) {
+      throw new ForbiddenException('You do not have permission to do this!');
+    }
   }
 }
