@@ -20,7 +20,6 @@ export class GradeStructure extends BaseEntity {
 
   @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
     eager: false,
-    orphanedRowAction: 'delete',
   })
   @JoinColumn()
   classroom: Classroom;

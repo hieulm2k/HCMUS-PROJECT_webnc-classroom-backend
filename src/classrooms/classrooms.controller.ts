@@ -182,7 +182,7 @@ export class ClassroomsController {
     @GetUser() user: User,
     @Body(new ParseArrayPipe({ items: CreateStudentListDto }))
     createStudentListDtos: CreateStudentListDto[],
-  ): Promise<GradeStructure> {
+  ): Promise<void> {
     return this.classroomService.createStudentList(
       id,
       user,

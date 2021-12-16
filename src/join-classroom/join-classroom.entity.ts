@@ -11,14 +11,12 @@ export class JoinClassroom extends BaseEntity {
 
   @ManyToOne((_type) => User, (user) => user.joinClassrooms, {
     eager: false,
-    orphanedRowAction: 'delete',
   })
   @JoinColumn()
   user: User;
 
   @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
     eager: false,
-    orphanedRowAction: 'delete',
   })
   @JoinColumn()
   classroom: Classroom;

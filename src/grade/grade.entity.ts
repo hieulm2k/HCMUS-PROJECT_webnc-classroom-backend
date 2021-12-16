@@ -13,12 +13,14 @@ export class Grade extends BaseEntity {
   @Column({ type: 'double precision', nullable: true, default: null })
   grade: number;
 
+  @Column({ type: 'uuid' })
+  classroomId: string;
+
   @ManyToOne(
     (_type) => GradeStructure,
     (gradeStructure) => gradeStructure.grades,
     {
       eager: false,
-      orphanedRowAction: 'delete',
     },
   )
   @JoinColumn()

@@ -144,13 +144,9 @@ export class ClassroomsService {
     id: string,
     user: User,
     createStudentListDtos: CreateStudentListDto[],
-  ): Promise<GradeStructure> {
+  ): Promise<void> {
     const classroom = await this.getClassroomById(id, user);
     await this.acceptOnlyOwner(classroom, user);
-
-    if (classroom.gradeStructures.length === 0) {
-      throw new BadRequestException('Please create grade structure first');
-    }
 
     const grades = await this.gradeService.getAllGrades(classroom.id);
 
@@ -163,12 +159,7 @@ export class ClassroomsService {
       createStudentListDtos,
     );
 
-    await this.gradeService.createStudentList(
-      createStudentListDtos,
-      classroom.gradeStructures,
-    );
-
-    return null;
+    await this.gradeService.createStudentList(createStudentListDtos, classroom);
   }
 
   async joinClassroomByCode(

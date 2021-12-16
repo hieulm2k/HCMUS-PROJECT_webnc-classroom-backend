@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { Repository } from 'typeorm';
@@ -18,7 +19,7 @@ export class GradeService {
     const query = this.gradeRepo
       .createQueryBuilder('grade')
       .leftJoinAndSelect('grade.gradeStructure', 'gradeStructure')
-      .andWhere('gradeStructure.classroom.id = :id', { id: classroomId });
+      .andWhere('grade.classroomId = :id', { id: classroomId });
 
     try {
       return query.getMany();
@@ -34,8 +35,17 @@ export class GradeService {
 
   async createStudentList(
     createStudentListDtos: CreateStudentListDto[],
-    gradeStructure: GradeStructure[],
+    classroom: Classroom,
   ): Promise<void> {
+    const gradeStructure = classroom.gradeStructures;
+
+    // create a student list without grade structure
+    // -> it will not delete when grade structure delete
+    await this.createStudentListWithoutGradeStructure(
+      createStudentListDtos,
+      classroom,
+    );
+
     gradeStructure.forEach(async (assignment) => {
       assignment.grades = [];
 
@@ -45,6 +55,7 @@ export class GradeService {
           let grade = this.gradeRepo.create({
             studentId,
             name,
+            classroomId: classroom.id,
           });
 
           grade = await this.gradeRepo.save(grade);
@@ -55,6 +66,26 @@ export class GradeService {
           throw new InternalServerErrorException();
         }
       });
+    });
+  }
+
+  async createStudentListWithoutGradeStructure(
+    createStudentListDtos: CreateStudentListDto[],
+    classroom: Classroom,
+  ): Promise<void> {
+    createStudentListDtos.forEach(async (student) => {
+      try {
+        const { studentId, name } = student;
+        const grade = this.gradeRepo.create({
+          studentId,
+          name,
+          classroomId: classroom.id,
+        });
+
+        await this.gradeRepo.save(grade);
+      } catch (error) {
+        throw new InternalServerErrorException();
+      }
     });
   }
 
@@ -78,6 +109,7 @@ export class GradeService {
       const newGrade = this.gradeRepo.create({
         studentId: grade.studentId,
         name: grade.name,
+        classroomId,
       });
 
       await this.gradeRepo.save(newGrade);
