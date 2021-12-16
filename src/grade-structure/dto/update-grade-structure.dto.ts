@@ -1,8 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { Double } from 'typeorm';
 
 export class UpdateGradeStructureDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ type: Double })
+  @IsOptional()
+  @IsNumber()
+  grade: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsNumber()
   order: number;
 }

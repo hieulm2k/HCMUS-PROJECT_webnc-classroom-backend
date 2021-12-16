@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
+import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { CreateGradeStructureDto } from './dto/create-grade-structure.dto';
+import { UpdateGradeStructureDto } from './dto/update-grade-structure.dto';
 import { GradeStructure } from './grade-structure.entity';
 
 @Injectable()
@@ -50,11 +52,7 @@ export class GradeStructureService {
     const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
     query.where({ classroom }).andWhere({ name });
 
-    try {
-      return await query.getOne();
-    } catch (error) {
-      throw new NotFoundException(`Grade structure does not exist!`);
-    }
+    return await query.getOne();
   }
 
   async createGradeStructure(
@@ -85,25 +83,53 @@ export class GradeStructureService {
   async updateGradeStructure(
     gradeId: string,
     classroom: Classroom,
-    updateGradeStructure: CreateGradeStructureDto,
+    dto: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
-    const { name, grade } = updateGradeStructure;
-    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
-    gradeStructure.name = name;
-    gradeStructure.grade = grade;
+    if (dto.name) {
+      const found = await this.getGradeStructureByName(dto.name, classroom);
+      if (found)
+        throw new BadRequestException(`Grade structure already exists"!`);
+    }
 
-    return this.saveGradeStructure(gradeStructure);
+    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
+
+    if (dto.order) {
+      await this.handleBeforeChangeOrderGradeStructure(
+        classroom,
+        gradeStructure.order,
+        dto.order,
+      );
+    }
+
+    return this.saveGradeStructure({ ...gradeStructure, ...dto });
   }
 
-  async updateOrderOfGradeStructure(
-    gradeId: string,
+  async handleBeforeChangeOrderGradeStructure(
     classroom: Classroom,
-    order: number,
-  ): Promise<GradeStructure> {
-    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
-    gradeStructure.order = order;
+    oldOrder: number,
+    newOrder: number,
+  ): Promise<void> {
+    if (oldOrder === newOrder) {
+      return;
+    }
 
-    return this.saveGradeStructure(gradeStructure);
+    const gradeStructures = await this.getGradeStructures(classroom);
+
+    if (newOrder > gradeStructures.length || newOrder < 1) {
+      throw new BadRequestException(`New order "${newOrder}" is out of range!`);
+    }
+
+    if (newOrder < oldOrder) {
+      for (let i = newOrder - 1; i < oldOrder - 1; ++i) {
+        gradeStructures[i].order++;
+        await this.saveGradeStructure(gradeStructures[i]);
+      }
+    } else if (newOrder > oldOrder) {
+      for (let i = oldOrder; i < newOrder; ++i) {
+        gradeStructures[i].order--;
+        await this.saveGradeStructure(gradeStructures[i]);
+      }
+    }
   }
 
   async saveGradeStructure(

@@ -199,7 +199,7 @@ export class ClassroomsController {
     @Param('id') id: string,
     @Param('structureId') structureId: string,
     @GetUser() user: User,
-    @Body() updateGradeStructure: CreateGradeStructureDto,
+    @Body() updateGradeStructure: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
     return this.classroomService.updateGradeStructure(
       id,
@@ -220,24 +220,5 @@ export class ClassroomsController {
     @GetUser() user: User,
   ): Promise<void> {
     return this.classroomService.deleteGradeStructure(id, structureId, user);
-  }
-
-  @Patch('/:id/grade-structures/:structureId/order')
-  @ApiOperation({
-    summary:
-      'to update order of a structure of classroom that owned by current user by classroom ID and structure ID',
-  })
-  async updateOrderGradeStructure(
-    @Param('id') id: string,
-    @Param('structureId') structureId: string,
-    @GetUser() user: User,
-    @Body() updateGradeStructure: UpdateGradeStructureDto,
-  ): Promise<GradeStructure> {
-    return this.classroomService.updateOrderOfGradeStructure(
-      id,
-      structureId,
-      user,
-      updateGradeStructure,
-    );
   }
 }

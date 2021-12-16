@@ -266,7 +266,7 @@ export class ClassroomsService {
     id: string,
     gradeId: string,
     user: User,
-    updateGradeStructure: CreateGradeStructureDto,
+    updateGradeStructure: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
@@ -276,65 +276,6 @@ export class ClassroomsService {
       classroom,
       updateGradeStructure,
     );
-  }
-
-  async updateOrderOfGradeStructure(
-    id: string,
-    gradeId: string,
-    user: User,
-    updateGradeStructure: UpdateGradeStructureDto,
-  ): Promise<GradeStructure> {
-    const { order } = updateGradeStructure;
-    const classroom = await this.getClassroomById(id, user);
-    await this.preventStudent(classroom, user);
-
-    const gradeStructure =
-      await this.gradeStructureService.getGradeStructureById(
-        gradeId,
-        classroom,
-      );
-
-    await this.handleBeforeChangeOrderGradeStructure(
-      id,
-      user,
-      gradeStructure.order,
-      order,
-    );
-
-    return this.gradeStructureService.updateOrderOfGradeStructure(
-      gradeId,
-      classroom,
-      order,
-    );
-  }
-
-  async handleBeforeChangeOrderGradeStructure(
-    id: string,
-    user: User,
-    oldOrder: number,
-    newOrder: number,
-  ): Promise<void> {
-    if (oldOrder === newOrder) {
-      return;
-    }
-
-    const gradeStructures = await this.getGradeStructures(id, user);
-
-    if (newOrder > gradeStructures.length) {
-      throw new BadRequestException(`New order "${newOrder}" is out of range!`);
-    }
-
-    if (newOrder < oldOrder) {
-      for (let i = newOrder - 1; i < oldOrder - 1; ++i) {
-        gradeStructures[i].order++;
-        await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
-      }
-    } else if (newOrder > oldOrder) {
-      for (let i = oldOrder; i < newOrder; ++i) {
-        gradeStructures[i].order--;
-        await this.gradeStructureService.saveGradeStructure(gradeStructures[i]);
-      }
-    }
   }
 
   async updateJoinClassrooms(
