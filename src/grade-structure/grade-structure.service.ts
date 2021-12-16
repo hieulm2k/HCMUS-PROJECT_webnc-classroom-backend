@@ -129,4 +129,10 @@ export class GradeStructureService {
       throw new NotFoundException(`Grade structure does not exist!`);
     }
   }
+
+  async deleteAllGradeStructuresOfClassroom(
+    classroom: Classroom,
+  ): Promise<void> {
+    await this.gradeStructureRepo.delete({ classroom });
+  }
 }

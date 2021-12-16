@@ -85,4 +85,10 @@ export class GradeService {
       await this.gradeStructureService.saveGradeStructure(assignment);
     });
   }
+
+  async deleteAllGradesOfGradeStructure(
+    gradeStructure: GradeStructure,
+  ): Promise<void> {
+    await this.gradeRepo.delete({ gradeStructure });
+  }
 }

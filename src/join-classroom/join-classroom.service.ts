@@ -29,7 +29,9 @@ export class JoinClassroomService {
     return this.joinClassroomRepository.createJoinClassroom(roles);
   }
 
-  async deleteJoinClassroom(classroom: Classroom): Promise<void> {
+  async deleteAllJoinClassroomsOfClassroom(
+    classroom: Classroom,
+  ): Promise<void> {
     await this.joinClassroomRepository.delete({ classroom });
   }
 }

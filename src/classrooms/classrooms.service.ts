@@ -379,7 +379,13 @@ export class ClassroomsService {
   async deleteClassroom(id: string, user: User): Promise<void> {
     const classroom = await this.getClassroomById(id, user);
     await this.acceptOnlyOwner(classroom, user);
-    await this.joinClassroomService.deleteJoinClassroom(classroom);
+    await this.joinClassroomService.deleteAllJoinClassroomsOfClassroom(
+      classroom,
+    );
+    await this.gradeService.removeAllGrades(id);
+    await this.gradeStructureService.deleteAllGradeStructuresOfClassroom(
+      classroom,
+    );
 
     const result = await this.classroomsRepository.delete(classroom.id);
 
@@ -401,8 +407,7 @@ export class ClassroomsService {
         classroom,
       );
 
-    gradeStructure.grades = [];
-    await this.gradeStructureService.saveGradeStructure(gradeStructure);
+    await this.gradeService.deleteAllGradesOfGradeStructure(gradeStructure);
 
     await this.gradeStructureService.deleteGradeStructure(gradeId);
     await this.updateOrderInGradeStructureList(id, user);
