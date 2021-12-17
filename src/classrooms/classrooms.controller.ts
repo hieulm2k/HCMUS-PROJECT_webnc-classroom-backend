@@ -155,6 +155,17 @@ export class ClassroomsController {
     return this.classroomService.getGradeStructures(id, user, param);
   }
 
+  @Get('/:id/grade-board')
+  @ApiOperation({
+    summary: 'to get grade board of classroom of current user by classroom ID',
+  })
+  async getGrade(
+    @Param('id') id: string,
+    @GetUser() user: User,
+  ): Promise<GradeStructure[]> {
+    return this.classroomService.getGradeBoard(id, user);
+  }
+
   @Post('/:id/grade-structures')
   @ApiOperation({
     summary:

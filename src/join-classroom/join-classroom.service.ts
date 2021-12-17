@@ -21,6 +21,16 @@ export class JoinClassroomService {
     return this.joinClassroomRepository.getClassroomByUser(classroom, user);
   }
 
+  getUserInClassroomByStudentId(
+    classroom: Classroom,
+    studentId: string,
+  ): Promise<User> {
+    return this.joinClassroomRepository.getUserInClassroomByStudentId(
+      classroom,
+      studentId,
+    );
+  }
+
   getMembersByRole(classroom: Classroom, role: Role): Promise<User[]> {
     return this.joinClassroomRepository.getMembersByRole(classroom, role);
   }

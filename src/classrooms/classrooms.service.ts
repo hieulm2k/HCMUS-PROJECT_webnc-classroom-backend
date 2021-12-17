@@ -90,6 +90,13 @@ export class ClassroomsService {
     return this.gradeStructureService.getGradeStructures(classroom);
   }
 
+  async getGradeBoard(id: string, user: User): Promise<any[]> {
+    const classroom = await this.getClassroomById(id, user);
+    await this.preventStudent(classroom, user);
+
+    return this.gradeService.getGradeBoard(classroom);
+  }
+
   async getClassroomById(id: string, user: User): Promise<Classroom> {
     const found = await this.classroomsRepository.findOne({ id });
 

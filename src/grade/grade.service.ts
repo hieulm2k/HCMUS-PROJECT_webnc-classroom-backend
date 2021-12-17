@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
+import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 import { Repository } from 'typeorm';
 import { CreateStudentListDto } from './dto/create-student-list.dto';
 import { Grade } from './grade.entity';
@@ -13,6 +14,7 @@ export class GradeService {
     @InjectRepository(Grade)
     private gradeRepo: Repository<Grade>,
     private readonly gradeStructureService: GradeStructureService,
+    private readonly joinClassroomService: JoinClassroomService,
   ) {}
 
   async getAllGrades(classroomId: string): Promise<Grade[]> {
@@ -22,10 +24,96 @@ export class GradeService {
       .andWhere('grade.classroomId = :id', { id: classroomId });
 
     try {
-      return query.getMany();
+      return await query.getMany();
     } catch (error) {
       throw new InternalServerErrorException();
     }
+  }
+
+  async getGradeBoard(classroom: Classroom): Promise<any[]> {
+    const grades = await this.gradeRepo
+      .createQueryBuilder('grade')
+      .leftJoinAndSelect('grade.gradeStructure', 'gradeStructure')
+      .where('grade.gradeStructure is not null')
+      .andWhere('grade.classroomId = :id', { id: classroom.id })
+      .orderBy('grade.studentId')
+      .getMany();
+
+    if (grades.length !== 0) {
+      let totalGrade = 0;
+      let count = 0;
+
+      const gradeBoard = [];
+
+      const user =
+        await this.joinClassroomService.getUserInClassroomByStudentId(
+          classroom,
+          grades[0].studentId,
+        );
+
+      let preGrade = {
+        studentId: grades[0].studentId,
+        name: grades[0].name,
+        userId: user === null ? user : user.id,
+      };
+      preGrade[grades[0].gradeStructure.name] = grades[0].grade;
+
+      if (grades[0].grade) {
+        totalGrade += grades[0].grade * grades[0].gradeStructure.grade;
+      }
+      count += grades[0].gradeStructure.grade;
+
+      for (let i = 1; i < grades.length; ++i) {
+        if (grades[i].studentId !== grades[i - 1].studentId) {
+          // count total grade of pre grade
+          preGrade['totalGrade'] = totalGrade / count;
+          gradeBoard.push(preGrade);
+
+          // create new pre grade
+          totalGrade = 0;
+          count = 0;
+          const user =
+            await this.joinClassroomService.getUserInClassroomByStudentId(
+              classroom,
+              grades[i].studentId,
+            );
+
+          preGrade = {
+            studentId: grades[i].studentId,
+            name: grades[i].name,
+            userId: user === null ? user : user.id,
+          };
+          preGrade[grades[i].gradeStructure.name] = grades[i].grade;
+
+          if (grades[i].grade) {
+            totalGrade += grades[i].grade * grades[i].gradeStructure.grade;
+          }
+          count += grades[0].gradeStructure.grade;
+        } else if (grades[i].studentId === grades[i - 1].studentId) {
+          preGrade[grades[i].gradeStructure.name] = grades[i].grade;
+
+          if (grades[i].grade) {
+            totalGrade += grades[i].grade * grades[i].gradeStructure.grade;
+          }
+
+          count += grades[i].gradeStructure.grade;
+        }
+      }
+      // count total grade of pre grade
+      preGrade['totalGrade'] = totalGrade / count;
+      gradeBoard.push(preGrade);
+
+      return gradeBoard;
+    }
+
+    const studentList = await this.gradeRepo
+      .createQueryBuilder('grade')
+      .select(['grade.studentId', 'grade.name', 'grade.userId'])
+      .where('grade.classroomId = :id', { id: classroom.id })
+      .orderBy('grade.studentId')
+      .getMany();
+
+    return studentList.length === 0 ? null : studentList;
   }
 
   async removeAllGrades(classroomId: string): Promise<void> {
@@ -49,7 +137,7 @@ export class GradeService {
     gradeStructure.forEach(async (assignment) => {
       assignment.grades = [];
 
-      await createStudentListDtos.forEach(async (student) => {
+      createStudentListDtos.forEach(async (student) => {
         try {
           const { studentId, name } = student;
           let grade = this.gradeRepo.create({
@@ -76,6 +164,7 @@ export class GradeService {
     createStudentListDtos.forEach(async (student) => {
       try {
         const { studentId, name } = student;
+
         const grade = this.gradeRepo.create({
           studentId,
           name,

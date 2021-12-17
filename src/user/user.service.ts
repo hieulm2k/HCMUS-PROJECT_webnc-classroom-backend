@@ -28,6 +28,18 @@ export class UserService {
     return found;
   }
 
+  async getUserByStudentId(id: string): Promise<User> {
+    const found = await this.userRepository.findOne({
+      where: id,
+    });
+
+    if (!found) {
+      throw new NotFoundException(`User does not exist!`);
+    }
+
+    return found;
+  }
+
   async getByEmail(email: string): Promise<User> {
     const found = await this.userRepository.findOne({
       email,
