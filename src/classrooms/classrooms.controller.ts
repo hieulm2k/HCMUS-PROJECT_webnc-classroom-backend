@@ -34,6 +34,8 @@ import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-struct
 import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
+import { Grade } from 'src/grade/grade.entity';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -217,6 +219,26 @@ export class ClassroomsController {
       structureId,
       user,
       updateGradeStructure,
+    );
+  }
+
+  @Patch('/:id/grades/:structureId')
+  @ApiOperation({
+    summary:
+      'to update grades of grade structure of classroom that owned by current user by classroom ID and grade structure ID',
+  })
+  async updateGradeOfGradeStructure(
+    @Param('id') id: string,
+    @Param('structureId') structureId: string,
+    @GetUser() user: User,
+    @Body(new ParseArrayPipe({ items: UpdateGradeOfGradeStructureDto }))
+    dtos: UpdateGradeOfGradeStructureDto[],
+  ): Promise<Grade[]> {
+    return this.classroomService.updateGradeOfGradeStructure(
+      id,
+      structureId,
+      user,
+      dtos,
     );
   }
 

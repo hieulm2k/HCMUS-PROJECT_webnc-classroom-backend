@@ -6,6 +6,7 @@ import { GradeStructureService } from 'src/grade-structure/grade-structure.servi
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 import { Repository } from 'typeorm';
 import { CreateStudentListDto } from './dto/create-student-list.dto';
+import { UpdateGradeOfGradeStructureDto } from './dto/update-grade.dto';
 import { Grade } from './grade.entity';
 
 @Injectable()
@@ -37,6 +38,7 @@ export class GradeService {
       .where('grade.gradeStructure is not null')
       .andWhere('grade.classroomId = :id', { id: classroom.id })
       .orderBy('grade.studentId')
+      .addOrderBy('gradeStructure.order')
       .getMany();
 
     if (grades.length !== 0) {
@@ -66,13 +68,13 @@ export class GradeService {
       for (let i = 1; i < grades.length; ++i) {
         if (grades[i].studentId !== grades[i - 1].studentId) {
           // count total grade of pre grade
-          preGrade['totalGrade'] = totalGrade / count;
+          preGrade['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
           gradeBoard.push(preGrade);
 
           // create new pre grade
           totalGrade = 0;
           count = 0;
-          const user =
+          const newUser =
             await this.joinClassroomService.getUserInClassroomByStudentId(
               classroom,
               grades[i].studentId,
@@ -81,7 +83,7 @@ export class GradeService {
           preGrade = {
             studentId: grades[i].studentId,
             name: grades[i].name,
-            userId: user === null ? user : user.id,
+            userId: newUser === null ? newUser : newUser.id,
           };
           preGrade[grades[i].gradeStructure.name] = grades[i].grade;
 
@@ -100,7 +102,7 @@ export class GradeService {
         }
       }
       // count total grade of pre grade
-      preGrade['totalGrade'] = totalGrade / count;
+      preGrade['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
       gradeBoard.push(preGrade);
 
       return gradeBoard;
@@ -205,6 +207,33 @@ export class GradeService {
       assignment.grades = [...assignment.grades, newGrade];
       await this.gradeStructureService.saveGradeStructure(assignment);
     });
+  }
+
+  async updateGradeOfGradeStructure(
+    classroom: Classroom,
+    structureId: string,
+    dtos: UpdateGradeOfGradeStructureDto[],
+  ): Promise<Grade[]> {
+    const gradeStructure =
+      await this.gradeStructureService.getGradeStructureById(
+        structureId,
+        classroom,
+      );
+
+    const grades = await this.gradeRepo
+      .createQueryBuilder('grade')
+      .where({ gradeStructure })
+      .getMany();
+
+    grades.forEach((grade) => {
+      dtos.forEach((dto) => {
+        if (grade.studentId === dto.studentId) {
+          grade.grade = Math.round(dto.grade * 100) / 100;
+        }
+      });
+    });
+
+    return this.gradeRepo.save(grades);
   }
 
   async deleteAllGradesOfGradeStructure(

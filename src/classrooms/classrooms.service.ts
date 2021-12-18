@@ -28,6 +28,8 @@ import { GetGradeStructureParam } from 'src/grade-structure/dto/get-grade-struct
 import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 import { GradeService } from 'src/grade/grade.service';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
+import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
+import { Grade } from 'src/grade/grade.entity';
 
 @Injectable()
 export class ClassroomsService {
@@ -273,6 +275,24 @@ export class ClassroomsService {
       gradeId,
       classroom,
       updateGradeStructure,
+    );
+  }
+
+  async updateGradeOfGradeStructure(
+    id: string,
+    structureId: string,
+    user: User,
+    dtos: UpdateGradeOfGradeStructureDto[],
+  ): Promise<Grade[]> {
+    const classroom = await this.getClassroomById(id, user);
+    await this.preventStudent(classroom, user);
+
+    dtos = await this.gradeService.deleteDuplicateStudent(dtos);
+
+    return this.gradeService.updateGradeOfGradeStructure(
+      classroom,
+      structureId,
+      dtos,
     );
   }
 

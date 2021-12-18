@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
-import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { CreateGradeStructureDto } from './dto/create-grade-structure.dto';
 import { UpdateGradeStructureDto } from './dto/update-grade-structure.dto';
