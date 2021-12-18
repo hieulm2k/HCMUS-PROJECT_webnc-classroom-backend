@@ -34,24 +34,32 @@ export class GradeStructureService {
     id: string,
     classroom: Classroom,
   ): Promise<GradeStructure> {
-    const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
-    query.where({ classroom }).andWhere({ id });
+    const gradeStructure = await this.gradeStructureRepo
+      .createQueryBuilder('gradeStructure')
+      .where({ classroom })
+      .andWhere('gradeStructure.id = :id', { id: id })
+      .getOne();
 
-    try {
-      return await query.getOne();
-    } catch (error) {
+    if (!gradeStructure) {
       throw new NotFoundException(`Grade structure does not exist!`);
     }
+
+    return gradeStructure;
   }
 
   async getGradeStructureByName(
     name: string,
     classroom: Classroom,
   ): Promise<GradeStructure> {
-    const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
-    query.where({ classroom }).andWhere({ name });
+    const gradeStructure = await this.gradeStructureRepo.findOne({
+      where: { name: name, classroom: classroom },
+    });
 
-    return await query.getOne();
+    if (!gradeStructure) {
+      throw new NotFoundException(`Grade structure does not exist!`);
+    }
+
+    return gradeStructure;
   }
 
   async createGradeStructure(
@@ -84,13 +92,13 @@ export class GradeStructureService {
     classroom: Classroom,
     dto: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
-    if (dto.name) {
+    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
+
+    if (dto.name && dto.name !== gradeStructure.name) {
       const found = await this.getGradeStructureByName(dto.name, classroom);
       if (found)
-        throw new BadRequestException(`Grade structure already exists"!`);
+        throw new BadRequestException(`Grade structure name already exists"!`);
     }
-
-    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
 
     if (dto.order) {
       await this.handleBeforeChangeOrderGradeStructure(

@@ -158,10 +158,9 @@ export class ClassroomsService {
     await this.acceptOnlyOwner(classroom, user);
 
     const grades = await this.gradeService.getAllGrades(classroom.id);
-
     if (grades.length !== 0) {
       // Delete all grades
-      await this.gradeService.removeAllGrades(classroom.id);
+      await this.gradeService.removeAllGrades(grades);
     }
 
     createStudentListDtos = await this.gradeService.deleteDuplicateStudent(
@@ -280,18 +279,18 @@ export class ClassroomsService {
 
   async updateGradeOfGradeStructure(
     id: string,
-    structureId: string,
+    structureName: string,
     user: User,
     dtos: UpdateGradeOfGradeStructureDto[],
-  ): Promise<Grade[]> {
+  ): Promise<void> {
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
 
     dtos = await this.gradeService.deleteDuplicateStudent(dtos);
 
-    return this.gradeService.updateGradeOfGradeStructure(
+    await this.gradeService.updateGradeOfGradeStructure(
       classroom,
-      structureId,
+      structureName,
       dtos,
     );
   }
@@ -341,7 +340,8 @@ export class ClassroomsService {
     await this.joinClassroomService.deleteAllJoinClassroomsOfClassroom(
       classroom,
     );
-    await this.gradeService.removeAllGrades(id);
+    const grades = await this.gradeService.getAllGrades(classroom.id);
+    await this.gradeService.removeAllGrades(grades);
     await this.gradeStructureService.deleteAllGradeStructuresOfClassroom(
       classroom,
     );
