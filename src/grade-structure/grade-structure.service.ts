@@ -69,7 +69,11 @@ export class GradeStructureService {
     const { name, grade } = createGradeStructureDto;
     let gradeStructure;
 
-    gradeStructure = await this.getGradeStructureByName(name, classroom);
+    try {
+      gradeStructure = await this.getGradeStructureByName(name, classroom);
+    } catch (error) {
+      // if not found, do nothing
+    }
 
     if (gradeStructure) {
       throw new BadRequestException(`Grade structure already exists"!`);
@@ -95,7 +99,13 @@ export class GradeStructureService {
     const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
 
     if (dto.name && dto.name !== gradeStructure.name) {
-      const found = await this.getGradeStructureByName(dto.name, classroom);
+      let found;
+      try {
+        found = await this.getGradeStructureByName(dto.name, classroom);
+      } catch (error) {
+        // if not found, do nothing
+      }
+
       if (found)
         throw new BadRequestException(`Grade structure name already exists"!`);
     }

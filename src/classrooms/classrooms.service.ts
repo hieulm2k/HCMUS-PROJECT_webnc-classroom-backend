@@ -255,7 +255,7 @@ export class ClassroomsService {
     const classroom = await this.getClassroomById(id, user);
     await this.acceptOnlyOwner(classroom, user);
 
-    return await this.classroomsRepository.save({
+    return this.classroomsRepository.save({
       ...classroom,
       ...updateClassroomDto,
     });
