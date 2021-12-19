@@ -268,7 +268,6 @@ export class ClassroomsService {
   ): Promise<GradeStructure> {
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
-
     return this.gradeStructureService.updateGradeStructure(
       gradeId,
       classroom,

@@ -1,5 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import {
+  IsBoolean,
+  IsBooleanString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
 import { Double } from 'typeorm';
 
 export class UpdateGradeStructureDto {
@@ -17,4 +23,10 @@ export class UpdateGradeStructureDto {
   @IsOptional()
   @IsNumber()
   order: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  @IsBoolean()
+  isFinalize: boolean;
 }

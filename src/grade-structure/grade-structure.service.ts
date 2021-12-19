@@ -34,11 +34,9 @@ export class GradeStructureService {
     id: string,
     classroom: Classroom,
   ): Promise<GradeStructure> {
-    const gradeStructure = await this.gradeStructureRepo
-      .createQueryBuilder('gradeStructure')
-      .where({ classroom })
-      .andWhere('gradeStructure.id = :id', { id: id })
-      .getOne();
+    const gradeStructure = await this.gradeStructureRepo.findOne({
+      where: { id: id, classroom: classroom },
+    });
 
     if (!gradeStructure) {
       throw new NotFoundException(`Grade structure does not exist!`);
@@ -96,7 +94,16 @@ export class GradeStructureService {
     classroom: Classroom,
     dto: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
-    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
+    let gradeStructure;
+    const match = gradeId.match(
+      '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
+
+    if (match !== null) {
+      gradeStructure = await this.getGradeStructureById(gradeId, classroom);
+    } else {
+      gradeStructure = await this.getGradeStructureByName(gradeId, classroom);
+    }
 
     if (dto.name && dto.name !== gradeStructure.name) {
       let found;

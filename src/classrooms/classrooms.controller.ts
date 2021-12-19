@@ -207,7 +207,7 @@ export class ClassroomsController {
     summary:
       'to update a structure of classroom that owned by current user by classroom ID and structure ID',
   })
-  async updateGradeStructure(
+  async updateGradeStructureById(
     @Param('id') id: string,
     @Param('structureId') structureId: string,
     @GetUser() user: User,
@@ -216,6 +216,25 @@ export class ClassroomsController {
     return this.classroomService.updateGradeStructure(
       id,
       structureId,
+      user,
+      updateGradeStructure,
+    );
+  }
+
+  @Patch('/:id/grade-structures/:structureName')
+  @ApiOperation({
+    summary:
+      'to update a structure of classroom that owned by current user by classroom ID and structure name',
+  })
+  async updateGradeStructureByName(
+    @Param('id') id: string,
+    @Param('structureName') structureName: string,
+    @GetUser() user: User,
+    @Body() updateGradeStructure: UpdateGradeStructureDto,
+  ): Promise<GradeStructure> {
+    return this.classroomService.updateGradeStructure(
+      id,
+      structureName,
       user,
       updateGradeStructure,
     );
