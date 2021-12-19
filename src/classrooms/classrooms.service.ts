@@ -29,7 +29,6 @@ import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 import { GradeService } from 'src/grade/grade.service';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
-import { Grade } from 'src/grade/grade.entity';
 
 @Injectable()
 export class ClassroomsService {

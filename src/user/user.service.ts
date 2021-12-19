@@ -69,13 +69,13 @@ export class UserService {
         studentId,
       });
 
-      if (user.studentId !== null) {
+      if (user.studentId !== null && studentId !== user.studentId) {
         throw new BadRequestException(
           'Cannot update Student ID twice, please contact Admin to update!',
         );
       }
 
-      if (found && studentId != user.studentId) {
+      if (found && studentId !== user.studentId) {
         throw new ConflictException('Student ID already exists!');
       }
     }

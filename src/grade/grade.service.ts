@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
@@ -95,6 +91,8 @@ export class GradeService {
             classroom,
             grades[i].studentId,
           );
+
+          console.log(user);
 
           newUserId = user === null ? null : user.id;
 
