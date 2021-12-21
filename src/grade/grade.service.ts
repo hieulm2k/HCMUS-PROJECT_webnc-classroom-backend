@@ -303,8 +303,9 @@ export class GradeService {
       let success = false;
       grades.forEach((grade) => {
         if (grade.studentId === dto.studentId) {
-          grade.grade = Math.round(dto.grade * 100) / 100;
-
+          if (dto.grade !== undefined) {
+            grade.grade = Math.round(dto.grade * 100) / 100;
+          }
           if (dto.isFinalize === undefined) {
             grade.isFinalize = false;
           } else {
