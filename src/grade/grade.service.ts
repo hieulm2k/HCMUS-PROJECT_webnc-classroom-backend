@@ -306,6 +306,7 @@ export class GradeService {
           if (dto.grade !== undefined) {
             grade.grade = Math.round(dto.grade * 100) / 100;
           }
+
           if (dto.isFinalize === undefined) {
             grade.isFinalize = false;
           } else {
@@ -317,7 +318,19 @@ export class GradeService {
         }
       });
 
-      if (!success) {
+      if (success) {
+        let count = 0;
+        for (const grade of grades) {
+          if (grade.isFinalize === true) {
+            count++;
+          }
+        }
+
+        if (count === grades.length) {
+          gradeStructure.isFinalize = true;
+          await this.gradeStructureService.saveGradeStructure(gradeStructure);
+        }
+      } else if (!success) {
         const newGrade = this.gradeRepo.create({
           studentId: dto.studentId,
           name: null,
