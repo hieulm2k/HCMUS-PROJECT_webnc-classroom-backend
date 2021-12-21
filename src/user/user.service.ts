@@ -17,21 +17,7 @@ export class UserService {
   ) {}
 
   async getUserById(id: string): Promise<User> {
-    const found = await this.userRepository.findOne({
-      where: id,
-    });
-
-    if (!found) {
-      throw new NotFoundException(`User does not exist!`);
-    }
-
-    return found;
-  }
-
-  async getUserByStudentId(id: string): Promise<User> {
-    const found = await this.userRepository.findOne({
-      where: id,
-    });
+    const found = await this.userRepository.findOne(id);
 
     if (!found) {
       throw new NotFoundException(`User does not exist!`);
@@ -84,7 +70,7 @@ export class UserService {
   }
 
   async createWithGoogle(email: string, name: string) {
-    const newUser = await this.userRepository.create({
+    const newUser = this.userRepository.create({
       email,
       name,
       isRegisteredWithGoogle: true,

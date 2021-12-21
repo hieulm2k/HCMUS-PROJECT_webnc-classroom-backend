@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
@@ -14,6 +19,7 @@ export class GradeService {
   constructor(
     @InjectRepository(Grade)
     private gradeRepo: Repository<Grade>,
+    @Inject(forwardRef(() => GradeStructureService))
     private readonly gradeStructureService: GradeStructureService,
     private readonly joinClassroomService: JoinClassroomService,
   ) {}
@@ -70,6 +76,8 @@ export class GradeService {
         name: grades[0].name,
         userId: newUserId,
       };
+      preGrade['isFinalize-' + grades[0].gradeStructure.name] =
+        grades[0].isFinalize;
       preGrade[grades[0].gradeStructure.name] = grades[0].grade;
 
       if (grades[0].grade) {
@@ -92,8 +100,6 @@ export class GradeService {
             grades[i].studentId,
           );
 
-          console.log(user);
-
           newUserId = user === null ? null : user.id;
 
           await this.updateUserIdByDefaultStudent(
@@ -107,6 +113,8 @@ export class GradeService {
             name: grades[i].name,
             userId: newUserId,
           };
+          preGrade['isFinalize-' + grades[i].gradeStructure.name] =
+            grades[i].isFinalize;
           preGrade[grades[i].gradeStructure.name] = grades[i].grade;
 
           if (grades[i].grade) {
@@ -114,6 +122,8 @@ export class GradeService {
           }
           count += grades[0].gradeStructure.grade;
         } else if (grades[i].studentId === grades[i - 1].studentId) {
+          preGrade['isFinalize-' + grades[i].gradeStructure.name] =
+            grades[i].isFinalize;
           preGrade[grades[i].gradeStructure.name] = grades[i].grade;
 
           if (grades[i].grade) {
@@ -137,16 +147,38 @@ export class GradeService {
 
     const studentList = await this.gradeRepo
       .createQueryBuilder('grade')
-      .select(['grade.studentId', 'grade.name', 'grade.userId'])
+      .select(['grade.studentId', 'grade.name', 'grade.userId', 'grade.id'])
       .where('grade.classroomId = :id', { id: classroom.id })
       .orderBy('grade.studentId')
       .getMany();
 
-    return studentList.length === 0 ? null : studentList;
+    if (studentList.length === 0) return null;
+
+    for (let i = 0; i < studentList.length; ++i) {
+      const user =
+        await this.joinClassroomService.getUserInClassroomByStudentId(
+          classroom,
+          studentList[i].studentId,
+        );
+
+      studentList[i].userId = user === null ? null : user.id;
+
+      await this.gradeRepo.update(studentList[i].id, {
+        userId: user === null ? null : user.id,
+      });
+
+      delete studentList[i].id;
+    }
+
+    return studentList;
   }
 
   async removeAllGrades(grades: Grade[]): Promise<void> {
     await this.gradeRepo.remove(grades);
+  }
+
+  async saveAllGrades(grades: Grade[]): Promise<void> {
+    await this.gradeRepo.save(grades);
   }
 
   async createStudentList(
@@ -162,11 +194,10 @@ export class GradeService {
       classroom,
     );
 
-    gradeStructure.forEach(async (assignment) => {
+    for (const assignment of gradeStructure) {
       assignment.grades = [];
       await this.gradeStructureService.saveGradeStructure(assignment);
-
-      createStudentListDtos.forEach(async (student) => {
+      for (const student of createStudentListDtos) {
         const { studentId, name } = student;
         const grade = this.gradeRepo.create({
           studentId,
@@ -180,8 +211,8 @@ export class GradeService {
         } catch (error) {
           throw new InternalServerErrorException();
         }
-      });
-    });
+      }
+    }
   }
 
   async createStudentListWithoutGradeStructure(
@@ -270,6 +301,13 @@ export class GradeService {
       grades.forEach((grade) => {
         if (grade.studentId === dto.studentId) {
           grade.grade = Math.round(dto.grade * 100) / 100;
+
+          if (dto.isFinalize === undefined) {
+            grade.isFinalize = false;
+          } else {
+            grade.isFinalize = dto.isFinalize;
+          }
+
           success = true;
           return;
         }

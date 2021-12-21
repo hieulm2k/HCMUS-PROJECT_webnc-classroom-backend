@@ -1,11 +1,14 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
+import { GradeService } from 'src/grade/grade.service';
 import { Repository } from 'typeorm';
 import { CreateGradeStructureDto } from './dto/create-grade-structure.dto';
 import { UpdateGradeStructureDto } from './dto/update-grade-structure.dto';
@@ -16,6 +19,8 @@ export class GradeStructureService {
   constructor(
     @InjectRepository(GradeStructure)
     private gradeStructureRepo: Repository<GradeStructure>,
+    @Inject(forwardRef(() => GradeService))
+    private readonly gradeService: GradeService,
   ) {}
 
   async getGradeStructures(classroom: Classroom): Promise<GradeStructure[]> {
@@ -94,7 +99,7 @@ export class GradeStructureService {
     classroom: Classroom,
     dto: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
-    let gradeStructure;
+    let gradeStructure: GradeStructure;
     const match = gradeId.match(
       '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     );
@@ -123,6 +128,14 @@ export class GradeStructureService {
         gradeStructure.order,
         dto.order,
       );
+    }
+
+    if (dto.isFinalize) {
+      const grades = gradeStructure.grades;
+      grades.forEach((grade) => {
+        grade.isFinalize = dto.isFinalize;
+      });
+      this.gradeService.saveAllGrades(grades);
     }
 
     return this.saveGradeStructure({ ...gradeStructure, ...dto });
