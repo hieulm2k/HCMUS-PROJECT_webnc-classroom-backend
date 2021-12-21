@@ -294,6 +294,9 @@ export class GradeService {
         classroom,
       );
 
+    gradeStructure.isFinalize = false;
+    await this.gradeStructureService.saveGradeStructure(gradeStructure);
+
     const grades = gradeStructure.grades;
 
     dtos.forEach(async (dto) => {
