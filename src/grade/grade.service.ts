@@ -344,9 +344,13 @@ export class GradeService {
         } catch (error) {
           throw new InternalServerErrorException();
         }
-        const gradeStructures = classroom.gradeStructures;
-        for (const structure of gradeStructures) {
+
+        for (let structure of classroom.gradeStructures) {
           structure.isFinalize = false;
+          structure = await this.gradeStructureService.saveGradeStructure(
+            structure,
+          );
+
           const newGrade = this.gradeRepo.create({
             studentId: dto.studentId,
             name: null,
@@ -364,9 +368,6 @@ export class GradeService {
             throw new InternalServerErrorException();
           }
         }
-        await this.gradeStructureService.saveAllGradeStructures(
-          gradeStructures,
-        );
       }
     }
 
