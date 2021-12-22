@@ -6,7 +6,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { isFQDN } from 'class-validator';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
@@ -312,11 +311,6 @@ export class GradeService {
           if (dto.isFinalize === undefined) {
             grade.isFinalize = false;
           } else {
-            if (dto.isFinalize === true && grade.grade === null) {
-              throw new BadRequestException(
-                'Cannnot finalize, please update grade first!',
-              );
-            }
             grade.isFinalize = dto.isFinalize;
           }
 
@@ -350,8 +344,9 @@ export class GradeService {
         } catch (error) {
           throw new InternalServerErrorException();
         }
-
-        for (const structure of classroom.gradeStructures) {
+        const gradeStructures = classroom.gradeStructures;
+        for (const structure of gradeStructures) {
+          structure.isFinalize = false;
           const newGrade = this.gradeRepo.create({
             studentId: dto.studentId,
             name: null,
@@ -369,6 +364,9 @@ export class GradeService {
             throw new InternalServerErrorException();
           }
         }
+        await this.gradeStructureService.saveAllGradeStructures(
+          gradeStructures,
+        );
       }
     }
 
