@@ -185,6 +185,12 @@ export class GradeStructureService {
     return gradeStructure;
   }
 
+  async saveAllGradeStructures(
+    gradeStructures: GradeStructure[],
+  ): Promise<void> {
+    await this.gradeStructureRepo.save(gradeStructures);
+  }
+
   async deleteGradeStructure(id: string): Promise<void> {
     const result = await this.gradeStructureRepo.delete({ id });
 

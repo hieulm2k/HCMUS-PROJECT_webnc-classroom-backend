@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { isFQDN } from 'class-validator';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
@@ -299,9 +301,9 @@ export class GradeService {
 
     const grades = gradeStructure.grades;
 
-    dtos.forEach(async (dto) => {
+    for (const dto of dtos) {
       let success = false;
-      grades.forEach((grade) => {
+      for (const grade of grades) {
         if (grade.studentId === dto.studentId) {
           if (dto.grade !== undefined) {
             grade.grade = Math.round(dto.grade * 100) / 100;
@@ -310,14 +312,19 @@ export class GradeService {
           if (dto.isFinalize === undefined) {
             grade.isFinalize = false;
           } else {
+            if (dto.isFinalize === true && grade.grade === null) {
+              throw new BadRequestException(
+                'Cannnot finalize, please update grade first!',
+              );
+            }
             grade.isFinalize = dto.isFinalize;
           }
 
           success = true;
-          return;
         }
-      });
+      }
 
+      // if all grade is finalize -> grade structure is finalize too
       if (success) {
         let count = 0;
         for (const grade of grades) {
@@ -331,6 +338,7 @@ export class GradeService {
           await this.gradeStructureService.saveGradeStructure(gradeStructure);
         }
       } else if (!success) {
+        // create default
         const newGrade = this.gradeRepo.create({
           studentId: dto.studentId,
           name: null,
@@ -343,7 +351,7 @@ export class GradeService {
           throw new InternalServerErrorException();
         }
 
-        classroom.gradeStructures.forEach(async (structure) => {
+        for (const structure of classroom.gradeStructures) {
           const newGrade = this.gradeRepo.create({
             studentId: dto.studentId,
             name: null,
@@ -351,8 +359,9 @@ export class GradeService {
             classroomId: classroom.id,
           });
 
-          if (structure === gradeStructure) {
+          if (structure.id === gradeStructure.id) {
             newGrade.grade = dto.grade;
+            console.log(newGrade.grade);
           }
 
           try {
@@ -360,9 +369,9 @@ export class GradeService {
           } catch (error) {
             throw new InternalServerErrorException();
           }
-        });
+        }
       }
-    });
+    }
 
     return this.gradeRepo.save(grades);
   }

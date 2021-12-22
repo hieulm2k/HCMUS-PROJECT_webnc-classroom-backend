@@ -162,6 +162,13 @@ export class ClassroomsService {
       await this.gradeService.removeAllGrades(grades);
     }
 
+    // Update grade structure finalize false
+    const gradeStructures = classroom.gradeStructures;
+    for (const gradeStructure of gradeStructures) {
+      gradeStructure.isFinalize = false;
+    }
+    await this.gradeStructureService.saveAllGradeStructures(gradeStructures);
+
     createStudentListDtos = await this.gradeService.deleteDuplicateStudent(
       createStudentListDtos,
     );
