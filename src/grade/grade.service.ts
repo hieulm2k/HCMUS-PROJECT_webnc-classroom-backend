@@ -361,7 +361,6 @@ export class GradeService {
 
           if (structure.id === gradeStructure.id) {
             newGrade.grade = dto.grade;
-            console.log(newGrade.grade);
           }
 
           try {
