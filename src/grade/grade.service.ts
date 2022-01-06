@@ -76,9 +76,11 @@ export class GradeService {
         name: grades[0].name,
         userId: newUserId,
       };
-      preGrade['isFinalize-' + grades[0].gradeStructure.name] =
-        grades[0].isFinalize;
-      preGrade[grades[0].gradeStructure.name] = grades[0].grade;
+
+      preGrade[grades[0].gradeStructure.name] = {
+        grade: grades[0].grade,
+        isFinalize: grades[0].isFinalize,
+      };
 
       if (grades[0].grade) {
         totalGrade += grades[0].grade * grades[0].gradeStructure.grade;
@@ -113,18 +115,21 @@ export class GradeService {
             name: grades[i].name,
             userId: newUserId,
           };
-          preGrade['isFinalize-' + grades[i].gradeStructure.name] =
-            grades[i].isFinalize;
-          preGrade[grades[i].gradeStructure.name] = grades[i].grade;
+
+          preGrade[grades[i].gradeStructure.name] = {
+            grade: grades[i].grade,
+            isFinalize: grades[i].isFinalize,
+          };
 
           if (grades[i].grade) {
             totalGrade += grades[i].grade * grades[i].gradeStructure.grade;
           }
           count += grades[0].gradeStructure.grade;
         } else if (grades[i].studentId === grades[i - 1].studentId) {
-          preGrade['isFinalize-' + grades[i].gradeStructure.name] =
-            grades[i].isFinalize;
-          preGrade[grades[i].gradeStructure.name] = grades[i].grade;
+          preGrade[grades[i].gradeStructure.name] = {
+            grade: grades[i].grade,
+            isFinalize: grades[i].isFinalize,
+          };
 
           if (grades[i].grade) {
             totalGrade += grades[i].grade * grades[i].gradeStructure.grade;
