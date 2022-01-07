@@ -109,6 +109,16 @@ export class ClassroomsService {
     }
   }
 
+  async getClassroomByCode(code: string): Promise<Classroom> {
+    const found = await this.classroomsRepository.findOne({ code: code });
+
+    if (!found) {
+      throw new NotFoundException(`Classroom does not exist!`);
+    }
+
+    return found;
+  }
+
   async createClassroom(
     createClassroomDto: CreateClassroomDto,
     user: User,

@@ -112,16 +112,35 @@ export class ClassroomsController {
   }
 
   @Get('/:id/join')
-  @ApiOperation({ summary: 'to join a classroom by code' })
+  @ApiOperation({ summary: 'to join a classroom by code with link' })
   @ApiQuery({ name: 'role', enum: Role })
   @ApiQuery({ name: 'code', type: String })
-  async joinClassroomByCode(
+  async joinClassroomByCodeWithLink(
     @Param('id') id: string,
     @GetUser() user: User,
     @Query() inviteJoinClassroomDto: InviteJoinClassroomDto,
   ): Promise<void> {
     return this.classroomService.joinClassroomByCode(
       id,
+      user,
+      inviteJoinClassroomDto,
+    );
+  }
+
+  @Get('/join')
+  @ApiOperation({ summary: 'to join a classroom by code' })
+  @ApiQuery({ name: 'role', enum: Role })
+  @ApiQuery({ name: 'code', type: String })
+  async joinClassroomByCode(
+    @GetUser() user: User,
+    @Query() inviteJoinClassroomDto: InviteJoinClassroomDto,
+  ): Promise<void> {
+    const classroom = await this.classroomService.getClassroomByCode(
+      inviteJoinClassroomDto.code,
+    );
+
+    return this.classroomService.joinClassroomByCode(
+      classroom.id,
       user,
       inviteJoinClassroomDto,
     );
