@@ -99,7 +99,8 @@ export class AuthService {
       where: { token: dto.token },
     });
 
-    if (!user) throw new BadRequestException('User does not exist');
+    if (!user || user.status === UserStatus.UNCONFIRMED)
+      throw new BadRequestException('User does not exist');
 
     if (moment().isSameOrAfter(user.tokenExpiration)) {
       throw new BadRequestException('Token has expired');
@@ -118,7 +119,7 @@ export class AuthService {
       where: { token: dto.token },
     });
 
-    if (!user) throw new BadRequestException('User does not exist');
+    if (!user) throw new BadRequestException('Activate account fail');
 
     if (moment().isSameOrAfter(user.tokenExpiration)) {
       throw new BadRequestException('Token has expired');
