@@ -4,11 +4,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePwd, UpdateUserDto } from './dto/user.dto';
 import { User } from './user.entity';
 import { UsersRepository } from './users.repository';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -66,7 +69,16 @@ export class UserService {
       }
     }
 
-    return await this.userRepository.save({ ...user, ...updateUserDto });
+    const updatedUser = await this.userRepository.save({
+      ...user,
+      ...updateUserDto,
+    });
+
+    delete updatedUser.password;
+    delete updatedUser.token;
+    delete updatedUser.tokenExpiration;
+    delete updatedUser.joinClassrooms;
+    return updatedUser;
   }
 
   async createWithGoogle(email: string, name: string) {
@@ -77,5 +89,22 @@ export class UserService {
     });
     await this.userRepository.save(newUser);
     return newUser;
+  }
+
+  async changePwd(dto: ChangePwd, user: User) {
+    if (!(await bcrypt.compare(dto.oldPassword, user.password))) {
+      throw new BadRequestException('Old password is wrong');
+    }
+
+    if (dto.oldPassword === dto.newPassword) {
+      throw new BadRequestException(
+        'New password must differ from old password',
+      );
+    }
+
+    const salt = await bcrypt.genSalt();
+    user.password = await bcrypt.hash(dto.newPassword, salt);
+
+    return this.userRepository.save(user);
   }
 }
