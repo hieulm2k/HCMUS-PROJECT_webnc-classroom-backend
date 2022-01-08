@@ -1,13 +1,17 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
+import { GradeService } from 'src/grade/grade.service';
 import { Repository } from 'typeorm';
 import { CreateGradeStructureDto } from './dto/create-grade-structure.dto';
+import { UpdateGradeStructureDto } from './dto/update-grade-structure.dto';
 import { GradeStructure } from './grade-structure.entity';
 
 @Injectable()
@@ -15,6 +19,8 @@ export class GradeStructureService {
   constructor(
     @InjectRepository(GradeStructure)
     private gradeStructureRepo: Repository<GradeStructure>,
+    @Inject(forwardRef(() => GradeService))
+    private readonly gradeService: GradeService,
   ) {}
 
   async getGradeStructures(classroom: Classroom): Promise<GradeStructure[]> {
@@ -33,30 +39,30 @@ export class GradeStructureService {
     id: string,
     classroom: Classroom,
   ): Promise<GradeStructure> {
-    const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
-    query.where({ classroom }).andWhere({ id });
+    const gradeStructure = await this.gradeStructureRepo.findOne({
+      where: { id: id, classroom: classroom },
+    });
 
-    try {
-      return await query.getOne();
-    } catch (error) {
-      throw new NotFoundException(
-        `Not found Grade structure with ID "${id} of "classroom with ID "${classroom.id}"!`,
-      );
+    if (!gradeStructure) {
+      throw new NotFoundException(`Grade structure does not exist!`);
     }
+
+    return gradeStructure;
   }
 
   async getGradeStructureByName(
     name: string,
     classroom: Classroom,
   ): Promise<GradeStructure> {
-    const query = this.gradeStructureRepo.createQueryBuilder('gradeStructure');
-    query.where({ classroom }).andWhere({ name });
+    const gradeStructure = await this.gradeStructureRepo.findOne({
+      where: { name: name, classroom: classroom },
+    });
 
-    try {
-      return await query.getOne();
-    } catch (error) {
-      throw new NotFoundException();
+    if (!gradeStructure) {
+      throw new NotFoundException(`Grade structure does not exist!`);
     }
+
+    return gradeStructure;
   }
 
   async createGradeStructure(
@@ -66,12 +72,14 @@ export class GradeStructureService {
     const { name, grade } = createGradeStructureDto;
     let gradeStructure;
 
-    gradeStructure = await this.getGradeStructureByName(name, classroom);
+    try {
+      gradeStructure = await this.getGradeStructureByName(name, classroom);
+    } catch (error) {
+      // if not found, do nothing
+    }
 
     if (gradeStructure) {
-      throw new BadRequestException(
-        `Grade structure with name "${name} of "classroom with ID "${classroom.id} is already exists"!`,
-      );
+      throw new BadRequestException(`Grade structure already exists"!`);
     }
 
     // If not found a grade structure with name
@@ -89,25 +97,76 @@ export class GradeStructureService {
   async updateGradeStructure(
     gradeId: string,
     classroom: Classroom,
-    updateGradeStructure: CreateGradeStructureDto,
+    dto: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
-    const { name, grade } = updateGradeStructure;
-    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
-    gradeStructure.name = name;
-    gradeStructure.grade = grade;
+    let gradeStructure: GradeStructure;
+    const match = gradeId.match(
+      '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
 
-    return this.saveGradeStructure(gradeStructure);
+    if (match !== null) {
+      gradeStructure = await this.getGradeStructureById(gradeId, classroom);
+    } else {
+      gradeStructure = await this.getGradeStructureByName(gradeId, classroom);
+    }
+
+    if (dto.name && dto.name !== gradeStructure.name) {
+      let found;
+      try {
+        found = await this.getGradeStructureByName(dto.name, classroom);
+      } catch (error) {
+        // if not found, do nothing
+      }
+
+      if (found)
+        throw new BadRequestException(`Grade structure name already exists"!`);
+    }
+
+    if (dto.order) {
+      await this.handleBeforeChangeOrderGradeStructure(
+        classroom,
+        gradeStructure.order,
+        dto.order,
+      );
+    }
+
+    if (dto.isFinalize) {
+      const grades = gradeStructure.grades;
+      grades.forEach((grade) => {
+        grade.isFinalize = dto.isFinalize;
+      });
+      this.gradeService.saveAllGrades(grades);
+    }
+
+    return this.saveGradeStructure({ ...gradeStructure, ...dto });
   }
 
-  async updateOrderOfGradeStructure(
-    gradeId: string,
+  async handleBeforeChangeOrderGradeStructure(
     classroom: Classroom,
-    order: number,
-  ): Promise<GradeStructure> {
-    const gradeStructure = await this.getGradeStructureById(gradeId, classroom);
-    gradeStructure.order = order;
+    oldOrder: number,
+    newOrder: number,
+  ): Promise<void> {
+    if (oldOrder === newOrder) {
+      return;
+    }
 
-    return this.saveGradeStructure(gradeStructure);
+    const gradeStructures = await this.getGradeStructures(classroom);
+
+    if (newOrder > gradeStructures.length || newOrder < 1) {
+      throw new BadRequestException(`New order "${newOrder}" is out of range!`);
+    }
+
+    if (newOrder < oldOrder) {
+      for (let i = newOrder - 1; i < oldOrder - 1; ++i) {
+        gradeStructures[i].order++;
+        await this.saveGradeStructure(gradeStructures[i]);
+      }
+    } else if (newOrder > oldOrder) {
+      for (let i = oldOrder; i < newOrder; ++i) {
+        gradeStructures[i].order--;
+        await this.saveGradeStructure(gradeStructures[i]);
+      }
+    }
   }
 
   async saveGradeStructure(
@@ -118,7 +177,7 @@ export class GradeStructureService {
     } catch (error) {
       if (error.code === '23505') {
         throw new BadRequestException(
-          `"${gradeStructure.name}" is already exists`,
+          `"${gradeStructure.name}" already exists`,
         );
       }
     }
@@ -126,11 +185,23 @@ export class GradeStructureService {
     return gradeStructure;
   }
 
+  async saveAllGradeStructures(
+    gradeStructures: GradeStructure[],
+  ): Promise<void> {
+    await this.gradeStructureRepo.save(gradeStructures);
+  }
+
   async deleteGradeStructure(id: string): Promise<void> {
     const result = await this.gradeStructureRepo.delete({ id });
 
     if (result.affected === 0) {
-      throw new NotFoundException(`Grade structure with ID "${id}" not found!`);
+      throw new NotFoundException(`Grade structure does not exist!`);
     }
+  }
+
+  async deleteAllGradeStructuresOfClassroom(
+    classroom: Classroom,
+  ): Promise<void> {
+    await this.gradeStructureRepo.delete({ classroom });
   }
 }

@@ -3,14 +3,19 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { EntityRepository, Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User, UserStatus } from './user.entity';
 import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
 import { AuthCredentialsDto } from '../auth/dto/index.dto';
+import { randomBytes } from 'crypto';
+
+const PWD_TOKEN_EXPIRATION = 3; //in days
 
 @EntityRepository(User)
 export class UsersRepository extends Repository<User> {
-  async createUser(signUpDto: AuthCredentialsDto.SignUpDto): Promise<void> {
+  async createUser(signUpDto: AuthCredentialsDto.SignUpDto): Promise<User> {
     const { email, password, name } = signUpDto;
+    const token = randomBytes(48).toString('base64');
     // hash
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -19,14 +24,17 @@ export class UsersRepository extends Repository<User> {
       email,
       password: hashedPassword,
       name,
+      status: UserStatus.UNCONFIRMED,
+      token: token,
+      tokenExpiration: moment().add(PWD_TOKEN_EXPIRATION, 'days').toDate(),
     });
 
     try {
-      await this.save(user);
+      return await this.save(user);
     } catch (error) {
       if (error.code === '23505') {
-        // duplicate username
-        throw new ConflictException('Email is already exists');
+        // duplicate email
+        throw new ConflictException('Email already exists');
       } else {
         throw new InternalServerErrorException();
       }

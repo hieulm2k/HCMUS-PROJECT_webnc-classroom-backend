@@ -17,8 +17,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
-    .setTitle('Classrooms example')
-    .setDescription('API for Classrooms')
+    .setTitle('Webnc Classroom API')
+    .setDescription('API for all endpoints in backend')
     .setVersion('1.0')
     .addTag('classrooms')
     .addBearerAuth(

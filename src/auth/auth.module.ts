@@ -10,10 +10,12 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './role.guard';
 import { JwtAuthGuard } from './jwt.guard';
 import { UsersRepository } from '../user/users.repository';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
     ConfigModule,
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -21,7 +23,7 @@ import { UsersRepository } from '../user/users.repository';
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get('JWT_SECRET'),
         signOptions: {
-          expiresIn: 3600,
+          expiresIn: '30d',
         },
       }),
     }),

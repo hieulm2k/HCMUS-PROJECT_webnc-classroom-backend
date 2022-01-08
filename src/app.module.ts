@@ -10,6 +10,7 @@ import { JoinClassroomModule } from './join-classroom/join-classroom.module';
 import { GoogleAuthenticationModule } from './google-authentication/google-authentication.module';
 import { MailModule } from './mail/mail.module';
 import { GradeStructureModule } from './grade-structure/grade-structure.module';
+import { GradeModule } from './grade/grade.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { GradeStructureModule } from './grade-structure/grade-structure.module';
     GoogleAuthenticationModule,
     MailModule,
     GradeStructureModule,
+    GradeModule,
   ],
   controllers: [UserController],
 })

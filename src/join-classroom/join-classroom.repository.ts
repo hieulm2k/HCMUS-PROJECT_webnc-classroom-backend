@@ -11,8 +11,7 @@ import { JoinClassroom } from './join-classroom.entity';
 @EntityRepository(JoinClassroom)
 export class JoinClassroomRepository extends Repository<JoinClassroom> {
   async getClassrooms(user: User): Promise<object[]> {
-    const query = this.createQueryBuilder('joinClassroom');
-    query
+    const query = this.createQueryBuilder('joinClassroom')
       .where({ user })
       .leftJoinAndSelect('joinClassroom.classroom', 'classroom');
 
@@ -42,8 +41,7 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
     classroom: Classroom,
     user: User,
   ): Promise<Classroom> {
-    const query = this.createQueryBuilder('joinClassroom');
-    query
+    const query = this.createQueryBuilder('joinClassroom')
       .where({ user })
       .leftJoinAndSelect('joinClassroom.classroom', 'classroom')
       .andWhere({ classroom });
@@ -52,15 +50,31 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
         await query.getOne()
       ).classroom;
     } catch (error) {
-      throw new NotFoundException(
-        `Classroom with ID "${classroom.id}" not found!`,
-      );
+      throw new NotFoundException(`Classroom does not exist!`);
+    }
+  }
+
+  async getUserInClassroomByStudentId(
+    classroom: Classroom,
+    studentId: string,
+  ): Promise<User> {
+    const query = this.createQueryBuilder('joinClassroom')
+      .leftJoinAndSelect('joinClassroom.user', 'user')
+      .where('user.studentId = :studentId', { studentId })
+      .andWhere(':role = ANY(roles)', { role: Role.STUDENT })
+      .andWhere({ classroom });
+
+    try {
+      return await (
+        await query.getOne()
+      ).user;
+    } catch (error) {
+      return null;
     }
   }
 
   async getMembersByRole(classroom: Classroom, role: Role): Promise<User[]> {
-    const query = this.createQueryBuilder('joinClassroom');
-    query
+    const query = this.createQueryBuilder('joinClassroom')
       .where({ classroom })
       .leftJoinAndSelect('joinClassroom.user', 'user')
       .andWhere(':role = ANY(roles)', { role: role });

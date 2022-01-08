@@ -5,7 +5,7 @@ import {
   UseInterceptors,
   Body,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/auth/decorators/public.decorator';
 
 import TokenVerificationDto from './dto/token-verification.dto';
@@ -21,6 +21,7 @@ export class GoogleAuthenticationController {
 
   @Post()
   @Public()
+  @ApiOperation({ summary: 'to verify google login token' })
   async authenticate(@Body() tokenData: TokenVerificationDto) {
     return this.googleAuthenticationService.authenticate(tokenData.token);
   }

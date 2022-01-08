@@ -21,6 +21,16 @@ export class JoinClassroomService {
     return this.joinClassroomRepository.getClassroomByUser(classroom, user);
   }
 
+  getUserInClassroomByStudentId(
+    classroom: Classroom,
+    studentId: string,
+  ): Promise<User> {
+    return this.joinClassroomRepository.getUserInClassroomByStudentId(
+      classroom,
+      studentId,
+    );
+  }
+
   getMembersByRole(classroom: Classroom, role: Role): Promise<User[]> {
     return this.joinClassroomRepository.getMembersByRole(classroom, role);
   }
@@ -29,7 +39,9 @@ export class JoinClassroomService {
     return this.joinClassroomRepository.createJoinClassroom(roles);
   }
 
-  async deleteJoinClassroom(classroom: Classroom): Promise<void> {
+  async deleteAllJoinClassroomsOfClassroom(
+    classroom: Classroom,
+  ): Promise<void> {
     await this.joinClassroomRepository.delete({ classroom });
   }
 }
