@@ -98,6 +98,33 @@ export class ClassroomsService {
     return this.gradeService.getGradeBoard(classroom);
   }
 
+  async getGradeDetailOfStudentId(
+    id: string,
+    user: User,
+    studentId: string,
+  ): Promise<any[]> {
+    const classroom = await this.getClassroomById(id, user);
+
+    if (
+      user.studentId !== studentId &&
+      !(await this.checkTeacher(classroom, user))
+    ) {
+      throw new ForbiddenException('You do not have permission to do this!');
+    }
+
+    const gradeBoard = await this.gradeService.getGradeBoard(classroom);
+
+    for (let i = 0; i < gradeBoard.length; ++i) {
+      if (gradeBoard[i]['studentId'] === studentId) {
+        return gradeBoard[i];
+      }
+    }
+
+    throw new NotFoundException(
+      `Not found grade detail of student ID: ${studentId}`,
+    );
+  }
+
   async getClassroomById(id: string, user: User): Promise<Classroom> {
     const found = await this.classroomsRepository.findOne({ id });
 
@@ -418,5 +445,20 @@ export class ClassroomsService {
     if (!isOwner) {
       throw new ForbiddenException('You do not have permission to do this!');
     }
+  }
+
+  async checkTeacher(classroom: Classroom, user: User): Promise<boolean> {
+    const teachers = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.TEACHER,
+    );
+
+    for (const teacher of teachers) {
+      if (teacher.id === user.id) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

@@ -61,6 +61,25 @@ export class ClassroomsController {
     return this.classroomService.createClassroom(createClassroomDto, user);
   }
 
+  @Get('join')
+  @ApiOperation({ summary: 'to join a classroom by code' })
+  @ApiQuery({ name: 'role', enum: Role })
+  @ApiQuery({ name: 'code', type: String })
+  async joinClassroomByCode(
+    @GetUser() user: User,
+    @Query() inviteJoinClassroomDto: InviteJoinClassroomDto,
+  ): Promise<void> {
+    const classroom = await this.classroomService.getClassroomByCode(
+      inviteJoinClassroomDto.code,
+    );
+
+    return this.classroomService.joinClassroomByCode(
+      classroom.id,
+      user,
+      inviteJoinClassroomDto,
+    );
+  }
+
   @Get('/:id')
   @ApiOperation({
     summary: 'to get a classroom of current user by classroom ID',
@@ -127,25 +146,6 @@ export class ClassroomsController {
     );
   }
 
-  @Get('/join')
-  @ApiOperation({ summary: 'to join a classroom by code' })
-  @ApiQuery({ name: 'role', enum: Role })
-  @ApiQuery({ name: 'code', type: String })
-  async joinClassroomByCode(
-    @GetUser() user: User,
-    @Query() inviteJoinClassroomDto: InviteJoinClassroomDto,
-  ): Promise<void> {
-    const classroom = await this.classroomService.getClassroomByCode(
-      inviteJoinClassroomDto.code,
-    );
-
-    return this.classroomService.joinClassroomByCode(
-      classroom.id,
-      user,
-      inviteJoinClassroomDto,
-    );
-  }
-
   @Get('/:id/joinByEmail')
   @ApiOperation({ summary: 'to join a classroom by email' })
   @ApiQuery({ name: 'role', enum: Role })
@@ -179,10 +179,10 @@ export class ClassroomsController {
   @ApiOperation({
     summary: 'to get grade board of classroom of current user by classroom ID',
   })
-  async getGrade(
+  async getGradeBoard(
     @Param('id') id: string,
     @GetUser() user: User,
-  ): Promise<GradeStructure[]> {
+  ): Promise<any[]> {
     return this.classroomService.getGradeBoard(id, user);
   }
 
@@ -219,6 +219,18 @@ export class ClassroomsController {
       user,
       createStudentListDtos,
     );
+  }
+
+  @Get('/:id/grade-board/:studentId')
+  @ApiOperation({
+    summary: 'to get grade board of classroom of current user by classroom ID',
+  })
+  async getGradeBoardOfStudentId(
+    @Param('id') id: string,
+    @Param('studentId') studentId: string,
+    @GetUser() user: User,
+  ): Promise<any> {
+    return this.classroomService.getGradeDetailOfStudentId(id, user, studentId);
   }
 
   @Patch('/:id/grade-structures/:structureId')
