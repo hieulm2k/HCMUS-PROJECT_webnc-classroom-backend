@@ -230,7 +230,7 @@ export class ClassroomsController {
     @Param('studentId') studentId: string,
     @GetUser() user: User,
   ): Promise<any> {
-    return this.classroomService.getGradeDetailOfStudentId(id, user, studentId);
+    return this.classroomService.getGradeOfStudentId(id, user, studentId);
   }
 
   @Patch('/:id/grade-structures/:structureId')

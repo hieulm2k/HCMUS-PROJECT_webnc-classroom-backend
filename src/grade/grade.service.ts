@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Classroom } from 'src/classrooms/classroom.entity';
@@ -81,6 +82,12 @@ export class GradeService {
         gradeId: grades[0].id,
         grade: grades[0].grade,
         isFinalize: grades[0].isFinalize,
+        hasReport:
+          grades[0].isReported === false &&
+          grades[0].expectedGrade !== null &&
+          grades[0].message !== null
+            ? true
+            : false,
       };
 
       if (grades[0].grade) {
@@ -121,6 +128,12 @@ export class GradeService {
             gradeId: grades[i].id,
             grade: grades[i].grade,
             isFinalize: grades[i].isFinalize,
+            hasReport:
+              grades[i].isReported === false &&
+              grades[i].expectedGrade !== null &&
+              grades[i].message !== null
+                ? true
+                : false,
           };
 
           if (grades[i].grade) {
@@ -132,6 +145,12 @@ export class GradeService {
             gradeId: grades[i].id,
             grade: grades[i].grade,
             isFinalize: grades[i].isFinalize,
+            hasReport:
+              grades[i].isReported === false &&
+              grades[i].expectedGrade !== null &&
+              grades[i].message !== null
+                ? true
+                : false,
           };
 
           if (grades[i].grade) {
@@ -179,6 +198,64 @@ export class GradeService {
     }
 
     return studentList;
+  }
+
+  async getGradeOfStudentId(
+    classroom: Classroom,
+    studentId: string,
+  ): Promise<any> {
+    const grades = await this.gradeRepo
+      .createQueryBuilder('grade')
+      .leftJoinAndSelect('grade.gradeStructure', 'gradeStructure')
+      .where('grade.gradeStructure is not null')
+      .andWhere('grade.classroomId = :id', { id: classroom.id })
+      .andWhere('grade.studentId = :studentId', { studentId: studentId })
+      .orderBy('grade.studentId')
+      .addOrderBy('gradeStructure.order')
+      .getMany();
+
+    if (grades.length === 0) {
+      throw new NotFoundException(
+        `Not found grade detail of student ID: ${studentId}`,
+      );
+    }
+
+    let totalGrade = 0;
+    let count = 0;
+
+    const user = await this.joinClassroomService.getUserInClassroomByStudentId(
+      classroom,
+      studentId,
+    );
+
+    const gradeDetail = { user: user, grades: [] };
+
+    for (let i = 0; i < grades.length; ++i) {
+      gradeDetail.grades.push({
+        gradeId: grades[i].id,
+        name: grades[i].gradeStructure.name,
+        grade: grades[i].grade,
+        isFinalize: grades[i].isFinalize,
+        reportInfo: {
+          isReported: grades[i].isReported,
+          expectedGrade: grades[i].expectedGrade,
+          message: grades[i].message,
+        },
+      });
+
+      if (grades[i].grade) {
+        totalGrade += grades[i].grade * grades[i].gradeStructure.grade;
+      }
+
+      count += grades[i].gradeStructure.grade;
+    }
+
+    console.log(totalGrade);
+
+    // count total grade of pre grade
+    gradeDetail['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
+
+    return gradeDetail;
   }
 
   async removeAllGrades(grades: Grade[]): Promise<void> {

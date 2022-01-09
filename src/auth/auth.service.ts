@@ -40,6 +40,10 @@ export class AuthService {
     const { email, password } = signInDto;
     const user = await this.userRepository.findOne({ email });
 
+    if (user && user.isRegisteredWithGoogle) {
+      throw new BadRequestException('Please login this email with google');
+    }
+
     if (
       user &&
       user.status === UserStatus.ACTIVE &&
@@ -50,9 +54,9 @@ export class AuthService {
         user: user,
         accessToken,
       };
-    } else {
-      throw new UnauthorizedException('Please check your login credentials');
     }
+
+    throw new UnauthorizedException('Please check your login credentials');
   }
 
   async getJwtAccessToken(email: string) {

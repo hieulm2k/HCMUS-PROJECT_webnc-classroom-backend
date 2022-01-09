@@ -16,6 +16,15 @@ export class Grade extends BaseEntity {
   @Column({ default: false })
   isFinalize: boolean;
 
+  @Column({ default: false })
+  isReported: boolean;
+
+  @Column({ type: 'double precision', nullable: true, default: null })
+  expectedGrade: number;
+
+  @Column({ nullable: true, default: null })
+  message: string;
+
   @Column({ type: 'uuid' })
   classroomId: string;
 

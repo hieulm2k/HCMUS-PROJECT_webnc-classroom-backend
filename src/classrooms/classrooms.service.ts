@@ -98,11 +98,11 @@ export class ClassroomsService {
     return this.gradeService.getGradeBoard(classroom);
   }
 
-  async getGradeDetailOfStudentId(
+  async getGradeOfStudentId(
     id: string,
     user: User,
     studentId: string,
-  ): Promise<any[]> {
+  ): Promise<any> {
     const classroom = await this.getClassroomById(id, user);
 
     if (
@@ -112,17 +112,7 @@ export class ClassroomsService {
       throw new ForbiddenException('You do not have permission to do this!');
     }
 
-    const gradeBoard = await this.gradeService.getGradeBoard(classroom);
-
-    for (let i = 0; i < gradeBoard.length; ++i) {
-      if (gradeBoard[i]['studentId'] === studentId) {
-        return gradeBoard[i];
-      }
-    }
-
-    throw new NotFoundException(
-      `Not found grade detail of student ID: ${studentId}`,
-    );
+    return this.gradeService.getGradeOfStudentId(classroom, studentId);
   }
 
   async getClassroomById(id: string, user: User): Promise<Classroom> {

@@ -62,7 +62,9 @@ export class GoogleAuthenticationService {
 
   async handleRegisteredUser(user: User) {
     if (!user.isRegisteredWithGoogle) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(
+        'You are already register account with this email!',
+      );
     }
 
     const accessToken = await this.authenticationService.getJwtAccessToken(
