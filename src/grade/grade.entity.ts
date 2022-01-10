@@ -2,6 +2,12 @@ import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
+export enum ReportStatus {
+  NEW = 'New',
+  OPEN = 'Open',
+  CLOSED = 'Closed',
+}
+
 @Entity()
 export class Grade extends BaseEntity {
   @Column()
@@ -16,8 +22,8 @@ export class Grade extends BaseEntity {
   @Column({ default: false })
   isFinalize: boolean;
 
-  @Column({ default: false })
-  isReported: boolean;
+  @Column({ enum: ReportStatus, type: 'enum', default: ReportStatus.NEW })
+  reportStatus: ReportStatus;
 
   @Column({ type: 'double precision', nullable: true, default: null })
   expectedGrade: number;

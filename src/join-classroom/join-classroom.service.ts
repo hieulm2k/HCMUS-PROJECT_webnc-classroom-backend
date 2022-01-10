@@ -44,4 +44,14 @@ export class JoinClassroomService {
   ): Promise<void> {
     await this.joinClassroomRepository.delete({ classroom });
   }
+
+  getJoinClassroomByClassroomIdAndUserId(
+    classroomId: string,
+    userId: string,
+  ): Promise<JoinClassroom> {
+    return this.joinClassroomRepository.getJoinClassroomByClassroomIdAndUserId(
+      classroomId,
+      userId,
+    );
+  }
 }

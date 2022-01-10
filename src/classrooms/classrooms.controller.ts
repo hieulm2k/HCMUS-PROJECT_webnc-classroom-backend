@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseArrayPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -85,7 +86,7 @@ export class ClassroomsController {
     summary: 'to get a classroom of current user by classroom ID',
   })
   async getClassroomById(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
   ): Promise<object> {
     const classroom = await this.classroomService.getClassroomById(id, user);
@@ -103,7 +104,7 @@ export class ClassroomsController {
   @Patch('/:id')
   @ApiOperation({ summary: 'to update a classroom that owned by current user' })
   updateClassroom(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateClassroomDto: UpdateClassroomDto,
     @GetUser() user: User,
   ): Promise<Classroom> {
@@ -113,7 +114,7 @@ export class ClassroomsController {
   @Delete('/:id')
   @ApiOperation({ summary: 'to delete a classroom that owned by current user' })
   deleteClassroom(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
   ): Promise<void> {
     return this.classroomService.deleteClassroom(id, user);
@@ -124,7 +125,7 @@ export class ClassroomsController {
     summary: 'to get all members of classroom of current user by classroom ID',
   })
   async getMembers(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
   ): Promise<object> {
     return this.classroomService.getMembers(id, user);
@@ -135,7 +136,7 @@ export class ClassroomsController {
   @ApiQuery({ name: 'role', enum: Role })
   @ApiQuery({ name: 'code', type: String })
   async joinClassroomByCodeWithLink(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Query() inviteJoinClassroomDto: InviteJoinClassroomDto,
   ): Promise<void> {
@@ -151,7 +152,7 @@ export class ClassroomsController {
   @ApiQuery({ name: 'role', enum: Role })
   @ApiQuery({ name: 'email', type: String })
   async joinClassroomByEmail(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Query() inviteJoinClassroomByEmailDto: InviteJoinClassroomByEmailDto,
   ): Promise<void> {
@@ -168,7 +169,7 @@ export class ClassroomsController {
       'to get grade structure of classroom of current user by classroom ID',
   })
   async getGradeStructures(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Query() param?: GetGradeStructureParam,
   ): Promise<GradeStructure[]> {
@@ -180,7 +181,7 @@ export class ClassroomsController {
     summary: 'to get grade board of classroom of current user by classroom ID',
   })
   async getGradeBoard(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
   ): Promise<any[]> {
     return this.classroomService.getGradeBoard(id, user);
@@ -192,7 +193,7 @@ export class ClassroomsController {
       'to create a new grade structure of classroom that owned by current user by classroom ID',
   })
   async createGradeStructure(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Body() createGradeStructureDto: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
@@ -209,7 +210,7 @@ export class ClassroomsController {
       'to create a new student list of classroom that owned by current user by classroom ID',
   })
   async createStudentList(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Body(new ParseArrayPipe({ items: CreateStudentListDto }))
     createStudentListDtos: CreateStudentListDto[],
@@ -226,7 +227,7 @@ export class ClassroomsController {
     summary: 'to get grade board of classroom of current user by classroom ID',
   })
   async getGradeBoardOfStudentId(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Param('studentId') studentId: string,
     @GetUser() user: User,
   ): Promise<any> {
@@ -239,7 +240,7 @@ export class ClassroomsController {
       'to update a structure of classroom that owned by current user by classroom ID and structure ID',
   })
   async updateGradeStructureById(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Param('structureId') structureId: string,
     @GetUser() user: User,
     @Body() updateGradeStructure: UpdateGradeStructureDto,
@@ -258,7 +259,7 @@ export class ClassroomsController {
       'to update a structure of classroom that owned by current user by classroom ID and structure name',
   })
   async updateGradeStructureByName(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Param('structureName') structureName: string,
     @GetUser() user: User,
     @Body() updateGradeStructure: UpdateGradeStructureDto,
@@ -277,7 +278,7 @@ export class ClassroomsController {
       'to update grades of grade structure of classroom that owned by current user by classroom ID and grade structure name',
   })
   async updateGradeOfGradeStructure(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Param('structureName') structureName: string,
     @GetUser() user: User,
     @Body(new ParseArrayPipe({ items: UpdateGradeOfGradeStructureDto }))
@@ -297,8 +298,8 @@ export class ClassroomsController {
       'to delete a structure of classroom that owned by current user by classroom ID and structure ID',
   })
   async deleteGradeStructure(
-    @Param('id') id: string,
-    @Param('structureId') structureId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('structureId', ParseUUIDPipe) structureId: string,
     @GetUser() user: User,
   ): Promise<void> {
     return this.classroomService.deleteGradeStructure(id, structureId, user);

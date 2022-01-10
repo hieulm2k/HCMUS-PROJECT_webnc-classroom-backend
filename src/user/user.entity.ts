@@ -8,6 +8,7 @@ export enum UserStatus {
   BANNED = 'Banned',
   UNCONFIRMED = 'Unconfirmed',
 }
+
 @Entity()
 export class User extends BaseEntity {
   @Column({ unique: true })

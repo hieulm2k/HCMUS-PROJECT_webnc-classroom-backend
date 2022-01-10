@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -6,14 +8,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from 'src/auth/enum/role.enum';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { CreateStudentListDto } from './dto/create-student-list.dto';
-import { UpdateGradeOfGradeStructureDto } from './dto/update-grade.dto';
-import { Grade } from './grade.entity';
+import {
+  RequestReviewDto,
+  UpdateGradeOfGradeStructureDto,
+} from './dto/update-grade.dto';
+import { Grade, ReportStatus } from './grade.entity';
 
 @Injectable()
 export class GradeService {
@@ -82,12 +89,7 @@ export class GradeService {
         gradeId: grades[0].id,
         grade: grades[0].grade,
         isFinalize: grades[0].isFinalize,
-        hasReport:
-          grades[0].isReported === false &&
-          grades[0].expectedGrade !== null &&
-          grades[0].message !== null
-            ? true
-            : false,
+        reportStatus: grades[0].reportStatus,
       };
 
       if (grades[0].grade) {
@@ -128,12 +130,7 @@ export class GradeService {
             gradeId: grades[i].id,
             grade: grades[i].grade,
             isFinalize: grades[i].isFinalize,
-            hasReport:
-              grades[i].isReported === false &&
-              grades[i].expectedGrade !== null &&
-              grades[i].message !== null
-                ? true
-                : false,
+            reportStatus: grades[i].reportStatus,
           };
 
           if (grades[i].grade) {
@@ -145,12 +142,7 @@ export class GradeService {
             gradeId: grades[i].id,
             grade: grades[i].grade,
             isFinalize: grades[i].isFinalize,
-            hasReport:
-              grades[i].isReported === false &&
-              grades[i].expectedGrade !== null &&
-              grades[i].message !== null
-                ? true
-                : false,
+            reportStatus: grades[i].reportStatus,
           };
 
           if (grades[i].grade) {
@@ -237,7 +229,7 @@ export class GradeService {
         grade: grades[i].grade,
         isFinalize: grades[i].isFinalize,
         reportInfo: {
-          isReported: grades[i].isReported,
+          reportStatus: grades[i].reportStatus,
           expectedGrade: grades[i].expectedGrade,
           message: grades[i].message,
         },
@@ -249,8 +241,6 @@ export class GradeService {
 
       count += grades[i].gradeStructure.grade;
     }
-
-    console.log(totalGrade);
 
     // count total grade of pre grade
     gradeDetail['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
@@ -462,5 +452,70 @@ export class GradeService {
     gradeStructure: GradeStructure,
   ): Promise<void> {
     await this.gradeRepo.delete({ gradeStructure });
+  }
+
+  async requestReview(
+    id: string,
+    user: User,
+    dto: RequestReviewDto,
+  ): Promise<Grade> {
+    const grade = await this.gradeRepo.findOne({
+      where: { id: id },
+      relations: ['gradeStructure'],
+    });
+
+    if (!grade || grade.studentId !== user.studentId) {
+      throw new NotFoundException('Grade does not exists!');
+    }
+
+    if (grade.reportStatus !== ReportStatus.NEW) {
+      throw new BadRequestException('Cannot report twice times!');
+    }
+
+    if (grade.grade === null || !grade.isFinalize) {
+      throw new BadRequestException(
+        'Cannot request review now, please wait the teachers to update grade or finalize grade',
+      );
+    }
+
+    grade.reportStatus = ReportStatus.OPEN;
+    grade.isFinalize = false;
+    grade.gradeStructure.isFinalize = false;
+    await this.gradeStructureService.saveGradeStructure(grade.gradeStructure);
+
+    return this.gradeRepo.save({ ...grade, ...dto });
+  }
+
+  async getAllRequestReviews(
+    classroomId: string,
+    user: User,
+  ): Promise<Grade[]> {
+    const joinClassroom =
+      await this.joinClassroomService.getJoinClassroomByClassroomIdAndUserId(
+        classroomId,
+        user.id,
+      );
+
+    if (!joinClassroom) {
+      throw new NotFoundException('Classroom does not exists!');
+    }
+
+    if (!joinClassroom.roles.includes(Role.TEACHER)) {
+      throw new ForbiddenException('You do not have permission to do this!');
+    }
+
+    const result = [];
+
+    for (const gradeStructure of joinClassroom.classroom.gradeStructures) {
+      const temp = { gradeStructure, grade: null };
+      for (const grade of gradeStructure.grades) {
+        if (grade.reportStatus === ReportStatus.OPEN) {
+          temp.grade = grade;
+          result.push(temp);
+        }
+      }
+    }
+
+    return result;
   }
 }
