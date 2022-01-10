@@ -1,6 +1,8 @@
+import { Exclude } from 'class-transformer';
+import { Comment } from 'src/comment/comment.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { BaseEntity } from 'src/utils/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 export enum ReportStatus {
   NEW = 'New',
@@ -46,4 +48,10 @@ export class Grade extends BaseEntity {
   )
   @JoinColumn()
   gradeStructure: GradeStructure;
+
+  @OneToMany((_type) => Comment, (comment) => comment.grade, {
+    eager: true,
+  })
+  @Exclude({ toPlainOnly: true })
+  comments: Comment[];
 }

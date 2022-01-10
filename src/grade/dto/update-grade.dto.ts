@@ -33,7 +33,7 @@ export class RequestReviewDto {
   @IsNumber()
   expectedGrade: number;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsNotEmpty()
   @IsString()
   message: string;

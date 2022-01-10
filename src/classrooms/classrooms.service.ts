@@ -107,7 +107,7 @@ export class ClassroomsService {
 
     if (
       user.studentId !== studentId &&
-      !(await this.checkTeacher(classroom, user))
+      !(await this.joinClassroomService.checkTeacher(classroom, user))
     ) {
       throw new ForbiddenException('You do not have permission to do this!');
     }
@@ -435,20 +435,5 @@ export class ClassroomsService {
     if (!isOwner) {
       throw new ForbiddenException('You do not have permission to do this!');
     }
-  }
-
-  async checkTeacher(classroom: Classroom, user: User): Promise<boolean> {
-    const teachers = await this.joinClassroomService.getMembersByRole(
-      classroom,
-      Role.TEACHER,
-    );
-
-    for (const teacher of teachers) {
-      if (teacher.id === user.id) {
-        return true;
-      }
-    }
-
-    return false;
   }
 }

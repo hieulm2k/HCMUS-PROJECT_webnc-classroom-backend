@@ -32,6 +32,19 @@ export class GradeService {
     private readonly joinClassroomService: JoinClassroomService,
   ) {}
 
+  async getGradeById(id: string): Promise<Grade> {
+    const grade = await this.gradeRepo.findOne({
+      where: { id: id },
+      relations: ['gradeStructure', 'gradeStructure.classroom'],
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found!');
+    }
+
+    return grade;
+  }
+
   async getAllGrades(classroomId: string): Promise<Grade[]> {
     const query = this.gradeRepo
       .createQueryBuilder('grade')

@@ -1,4 +1,5 @@
 import { Exclude } from 'class-transformer';
+import { Comment } from 'src/comment/comment.entity';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Entity, Column, OneToMany } from 'typeorm';
@@ -44,4 +45,10 @@ export class User extends BaseEntity {
   })
   @Exclude({ toPlainOnly: true })
   joinClassrooms: JoinClassroom[];
+
+  @OneToMany((_type) => Comment, (comment) => comment.sender, {
+    eager: true,
+  })
+  @Exclude({ toPlainOnly: true })
+  comments: Comment[];
 }

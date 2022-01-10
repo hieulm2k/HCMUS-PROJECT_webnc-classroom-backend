@@ -54,4 +54,16 @@ export class JoinClassroomService {
       userId,
     );
   }
+
+  async checkTeacher(classroom: Classroom, user: User): Promise<boolean> {
+    const teachers = await this.getMembersByRole(classroom, Role.TEACHER);
+
+    for (const teacher of teachers) {
+      if (teacher.id === user.id) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

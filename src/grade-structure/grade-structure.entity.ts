@@ -18,7 +18,7 @@ export class GradeStructure extends BaseEntity {
   @Column({ default: false })
   isFinalize: boolean;
 
-  @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
+  @ManyToOne((_type) => Classroom, (classroom) => classroom.gradeStructures, {
     eager: false,
   })
   @JoinColumn()
