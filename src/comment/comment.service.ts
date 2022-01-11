@@ -16,6 +16,22 @@ export class CommentService {
     private readonly joinClassroomService: JoinClassroomService,
   ) {}
 
+  async getAllComments(gradeId: string, user: User): Promise<Comment[]> {
+    const grade = await this.gradeService.getGradeById(gradeId);
+
+    if (
+      grade.studentId !== user.studentId &&
+      !(await this.joinClassroomService.checkTeacher(
+        grade.gradeStructure.classroom,
+        user,
+      ))
+    ) {
+      throw new ForbiddenException('You do not have permission to do this');
+    }
+
+    return grade.comments;
+  }
+
   async postComment(
     gradeId: string,
     user: User,

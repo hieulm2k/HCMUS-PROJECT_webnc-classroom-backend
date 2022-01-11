@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
@@ -20,6 +21,15 @@ import { PostCommentDto } from './dto/post-comment.dto';
 @ApiBearerAuth('access-token')
 export class CommentController {
   constructor(private commentService: CommentService) {}
+
+  @Get(':gradeId')
+  @ApiOperation({ summary: 'to get all comments of a grade review' })
+  getAllComments(
+    @Param('gradeId', ParseUUIDPipe) gradeId: string,
+    @GetUser() user: User,
+  ): Promise<Comment[]> {
+    return this.commentService.getAllComments(gradeId, user);
+  }
 
   @Post(':gradeId')
   @ApiOperation({ summary: 'to post a comment of a grade review' })

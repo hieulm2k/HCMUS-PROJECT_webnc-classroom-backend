@@ -5,18 +5,18 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Comment extends BaseEntity {
-  @ManyToOne((_type) => User, (user) => user.comments, {
+  @ManyToOne(() => User, (user) => user.comments, {
     eager: false,
   })
   @JoinColumn()
   sender: User;
 
-  @ManyToOne((_type) => Grade, (grade) => grade.comments, {
+  @ManyToOne(() => Grade, (grade) => grade.comments, {
     eager: false,
   })
   @JoinColumn()
   grade: Grade;
 
-  @Column({ nullable: true, default: null })
+  @Column()
   message: string;
 }

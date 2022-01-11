@@ -13,7 +13,7 @@ import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
-import { User } from 'src/user/user.entity';
+import { User, UserStatus } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { CreateStudentListDto } from './dto/create-student-list.dto';
 import {
@@ -35,7 +35,12 @@ export class GradeService {
   async getGradeById(id: string): Promise<Grade> {
     const grade = await this.gradeRepo.findOne({
       where: { id: id },
-      relations: ['gradeStructure', 'gradeStructure.classroom'],
+      relations: [
+        'gradeStructure',
+        'gradeStructure.classroom',
+        'comments',
+        'comments.sender',
+      ],
     });
 
     if (!grade) {
@@ -79,18 +84,12 @@ export class GradeService {
         grades[0].studentId,
       );
 
-      let newUserId = user === null ? null : user.id;
-
-      await this.gradeRepo.update(grades[0].id, {
-        ...grades[0],
-        userId: newUserId,
-      });
-
-      await this.updateUserIdByDefaultStudent(
-        classroom.id,
-        grades[0].studentId,
-        newUserId,
-      );
+      let newUserId =
+        user === null
+          ? null
+          : user.status === UserStatus.ACTIVE
+          ? user.id
+          : null;
 
       let preGrade = {
         studentId: grades[0].studentId,
@@ -125,13 +124,12 @@ export class GradeService {
             grades[i].studentId,
           );
 
-          newUserId = user === null ? null : user.id;
-
-          await this.updateUserIdByDefaultStudent(
-            classroom.id,
-            grades[i].studentId,
-            newUserId,
-          );
+          newUserId =
+            user === null
+              ? null
+              : user.status === UserStatus.ACTIVE
+              ? user.id
+              : null;
 
           preGrade = {
             studentId: grades[i].studentId,
@@ -164,11 +162,6 @@ export class GradeService {
 
           count += grades[i].gradeStructure.grade;
         }
-
-        await this.gradeRepo.update(grades[i].id, {
-          ...grades[i],
-          userId: newUserId,
-        });
       }
       // count total grade of pre grade
       preGrade['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
@@ -185,23 +178,6 @@ export class GradeService {
       .getMany();
 
     if (studentList.length === 0) return null;
-
-    for (let i = 0; i < studentList.length; ++i) {
-      const user =
-        await this.joinClassroomService.getUserInClassroomByStudentId(
-          classroom,
-          studentList[i].studentId,
-        );
-
-      studentList[i].userId = user === null ? null : user.id;
-
-      await this.gradeRepo.update(studentList[i].id, {
-        userId: user === null ? null : user.id,
-      });
-
-      delete studentList[i].id;
-    }
-
     return studentList;
   }
 
@@ -351,24 +327,6 @@ export class GradeService {
       assignment.grades = [...assignment.grades, newGrade];
       await this.gradeStructureService.saveGradeStructure(assignment);
     });
-  }
-
-  async updateUserIdByDefaultStudent(
-    classroomId: string,
-    studentId: string,
-    newUserId: string,
-  ): Promise<Grade> {
-    const student = await this.gradeRepo.findOne({
-      where: {
-        studentId: studentId,
-        classroomId: classroomId,
-        gradeStructure: null,
-      },
-      relations: ['gradeStructure'],
-    });
-
-    student.userId = newUserId;
-    return this.gradeRepo.save(student);
   }
 
   async updateGradeOfGradeStructure(
@@ -530,5 +488,19 @@ export class GradeService {
     }
 
     return result;
+  }
+
+  async updateGradeByClassroomAndUser(
+    classroom: Classroom,
+    user: User,
+  ): Promise<void> {
+    const grades = await this.gradeRepo.find({
+      where: { classroomId: classroom.id, studentId: user.studentId },
+    });
+
+    for (const grade of grades) {
+      grade.userId = user.id;
+      await this.gradeRepo.save(grade);
+    }
   }
 }

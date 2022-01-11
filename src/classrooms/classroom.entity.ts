@@ -24,18 +24,14 @@ export class Classroom extends BaseEntity {
   @Column({ nullable: true })
   room: string;
 
-  @OneToMany(
-    (_type) => JoinClassroom,
-    (joinClassroom) => joinClassroom.classroom,
-    {
-      eager: true,
-    },
-  )
+  @OneToMany(() => JoinClassroom, (joinClassroom) => joinClassroom.classroom, {
+    eager: true,
+  })
   @Exclude({ toPlainOnly: true })
   joinClassrooms: JoinClassroom[];
 
   @OneToMany(
-    (_type) => GradeStructure,
+    () => GradeStructure,
     (gradeStructure) => gradeStructure.classroom,
     {
       eager: true,

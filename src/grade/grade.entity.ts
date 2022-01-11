@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { Comment } from 'src/comment/comment.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
+import { Notification } from 'src/notification/notification.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
@@ -39,19 +40,21 @@ export class Grade extends BaseEntity {
   @Column({ type: 'uuid', nullable: true, default: null })
   userId: string;
 
-  @ManyToOne(
-    (_type) => GradeStructure,
-    (gradeStructure) => gradeStructure.grades,
-    {
-      eager: false,
-    },
-  )
+  @ManyToOne(() => GradeStructure, (gradeStructure) => gradeStructure.grades, {
+    eager: false,
+  })
   @JoinColumn()
   gradeStructure: GradeStructure;
 
-  @OneToMany((_type) => Comment, (comment) => comment.grade, {
+  @OneToMany(() => Comment, (comment) => comment.grade, {
     eager: true,
   })
   @Exclude({ toPlainOnly: true })
   comments: Comment[];
+
+  @OneToMany(() => Comment, (comment) => comment.grade, {
+    eager: true,
+  })
+  @Exclude({ toPlainOnly: true })
+  notifications: Notification[];
 }

@@ -9,20 +9,25 @@ import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 import { ChangePwd, UpdateUserDto } from './dto/user.dto';
-import { User } from './user.entity';
+import { User, UserStatus } from './user.entity';
 import { UsersRepository } from './users.repository';
+import { GradeService } from 'src/grade/grade.service';
+import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { Classroom } from 'src/classrooms/classroom.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UsersRepository)
     private userRepository: UsersRepository,
+    private readonly gradeService: GradeService,
+    private readonly joinClassroomService: JoinClassroomService,
   ) {}
 
   async getUserById(id: string): Promise<User> {
     const found = await this.userRepository.findOne(id);
 
-    if (!found) {
+    if (!found || found.status !== UserStatus.ACTIVE) {
       throw new NotFoundException(`User does not exist!`);
     }
 
@@ -34,7 +39,7 @@ export class UserService {
       email,
     });
 
-    if (!found) {
+    if (!found || found.status !== UserStatus.ACTIVE) {
       throw new NotFoundException(`User with email "${email}" does not exist!`);
     }
 
@@ -67,6 +72,17 @@ export class UserService {
       if (found && studentId !== user.studentId) {
         throw new ConflictException('Student ID already exists!');
       }
+
+      // If user join a classroom -> need to update all mapping userId of grade of that classroom
+      const joinClassrooms = await this.joinClassroomService.getClassrooms(
+        user,
+      );
+
+      user.studentId = studentId;
+      for (const joinClassroom of joinClassrooms) {
+        const classroom: Classroom = joinClassroom['classroom'];
+        await this.gradeService.updateGradeByClassroomAndUser(classroom, user);
+      }
     }
 
     const updatedUser = await this.userRepository.save({
@@ -78,6 +94,9 @@ export class UserService {
     delete updatedUser.token;
     delete updatedUser.tokenExpiration;
     delete updatedUser.joinClassrooms;
+    delete updatedUser.comments;
+    delete updatedUser.notificationsReceived;
+    delete updatedUser.notificationsSent;
     return updatedUser;
   }
 
