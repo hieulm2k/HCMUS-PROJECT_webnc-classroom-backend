@@ -13,6 +13,12 @@ import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { AddNotificationDto } from 'src/notification/dto/add-noti.entity';
+import {
+  NotificationStatus,
+  NotificationType,
+} from 'src/notification/notification.entity';
+import { NotificationService } from 'src/notification/notification.service';
 import { User, UserStatus } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { CreateStudentListDto } from './dto/create-student-list.dto';
@@ -30,6 +36,7 @@ export class GradeService {
     @Inject(forwardRef(() => GradeStructureService))
     private readonly gradeStructureService: GradeStructureService,
     private readonly joinClassroomService: JoinClassroomService,
+    private readonly notiService: NotificationService,
   ) {}
 
   async getGradeById(id: string): Promise<Grade> {
@@ -429,10 +436,10 @@ export class GradeService {
     id: string,
     user: User,
     dto: RequestReviewDto,
-  ): Promise<Grade> {
+  ): Promise<void> {
     const grade = await this.gradeRepo.findOne({
       where: { id: id },
-      relations: ['gradeStructure'],
+      relations: ['gradeStructure', 'gradeStructure.classroom'],
     });
 
     if (!grade || grade.studentId !== user.studentId) {
@@ -451,10 +458,31 @@ export class GradeService {
 
     grade.reportStatus = ReportStatus.OPEN;
     grade.isFinalize = false;
+
+    // Update grade structure
     grade.gradeStructure.isFinalize = false;
     await this.gradeStructureService.saveGradeStructure(grade.gradeStructure);
 
-    return this.gradeRepo.save({ ...grade, ...dto });
+    // Add notifications to all teachers in classroom
+    const classroom = grade.gradeStructure.classroom;
+    const teachers = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.TEACHER,
+    );
+
+    for (const teacher of teachers) {
+      const notiDto: AddNotificationDto = {
+        receiver: teacher,
+        type: NotificationType.REQUEST_REVIEW,
+        status: NotificationStatus.NEW,
+        grade: grade,
+      };
+
+      await this.notiService.addNotification(user, notiDto);
+    }
+
+    // Save grade review to grade
+    await this.gradeRepo.save({ ...grade, ...dto });
   }
 
   async getAllRequestReviews(

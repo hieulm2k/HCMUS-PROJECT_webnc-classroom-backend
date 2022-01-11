@@ -1,4 +1,11 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
@@ -19,5 +26,24 @@ export class NotificationController {
   })
   getAllNotifications(@GetUser() user: User): Promise<Notification[]> {
     return this.notiService.getAllNotifications(user);
+  }
+
+  @Patch()
+  @ApiOperation({
+    summary: 'to update all notifications status to To Read',
+  })
+  updateToRead(@GetUser() user: User): Promise<void> {
+    return this.notiService.updateToRead(user);
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'to update a notification status to done',
+  })
+  updateDone(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: User,
+  ): Promise<void> {
+    return this.notiService.updateDone(id, user);
   }
 }

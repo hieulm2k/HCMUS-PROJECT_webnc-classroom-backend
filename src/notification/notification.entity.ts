@@ -35,9 +35,6 @@ export class Notification extends BaseEntity {
   @JoinColumn()
   grade: Grade;
 
-  @Column()
-  message: string;
-
   @Column({
     enum: NotificationStatus,
     type: 'enum',

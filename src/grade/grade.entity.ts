@@ -52,7 +52,7 @@ export class Grade extends BaseEntity {
   @Exclude({ toPlainOnly: true })
   comments: Comment[];
 
-  @OneToMany(() => Comment, (comment) => comment.grade, {
+  @OneToMany(() => Notification, (notification) => notification.grade, {
     eager: true,
   })
   @Exclude({ toPlainOnly: true })

@@ -39,7 +39,7 @@ export class GradeController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: User,
     @Body() dto: RequestReviewDto,
-  ): Promise<Grade> {
+  ): Promise<void> {
     return this.gradeService.requestReview(id, user, dto);
   }
 }
