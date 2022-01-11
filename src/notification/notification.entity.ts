@@ -3,6 +3,12 @@ import { User } from 'src/user/user.entity';
 import { BaseEntity } from 'src/utils/base.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
+export enum NotificationType {
+  FINALIZE_GRADE = 'Finalize Grade',
+  REPLY_COMMENT = 'Reply Comment',
+  REQUEST_REVIEW = 'Request Review',
+}
+
 export enum NotificationStatus {
   NEW = 'Active',
   TO_READ = 'To Read',
@@ -38,4 +44,10 @@ export class Notification extends BaseEntity {
     default: NotificationStatus.NEW,
   })
   status: NotificationStatus;
+
+  @Column({
+    enum: NotificationType,
+    type: 'enum',
+  })
+  type: NotificationType;
 }
