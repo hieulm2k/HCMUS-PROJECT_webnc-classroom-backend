@@ -10,7 +10,7 @@ export enum NotificationType {
 }
 
 export enum NotificationStatus {
-  NEW = 'Active',
+  NEW = 'New',
   TO_READ = 'To Read',
   DONE = 'Done',
 }

@@ -202,12 +202,6 @@ export class GradeService {
       .addOrderBy('gradeStructure.order')
       .getMany();
 
-    if (grades.length === 0) {
-      throw new NotFoundException(
-        `Not found grade detail of student ID: ${studentId}`,
-      );
-    }
-
     let totalGrade = 0;
     let count = 0;
 
@@ -284,13 +278,15 @@ export class GradeService {
         }
       }
     }
+
+    await this.syncUserIdBetweenGradeAndJoinClassroom(classroom);
   }
 
   async createStudentListWithoutGradeStructure(
     createStudentListDtos: CreateStudentListDto[],
     classroom: Classroom,
   ): Promise<void> {
-    createStudentListDtos.forEach(async (student) => {
+    for (const student of createStudentListDtos) {
       const { studentId, name } = student;
 
       const grade = this.gradeRepo.create({
@@ -304,7 +300,20 @@ export class GradeService {
       } catch (error) {
         throw new InternalServerErrorException();
       }
-    });
+    }
+  }
+
+  async syncUserIdBetweenGradeAndJoinClassroom(
+    classroom: Classroom,
+  ): Promise<void> {
+    const students = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.STUDENT,
+    );
+
+    for (const student of students) {
+      await this.updateGradeByClassroomAndUser(classroom, student);
+    }
   }
 
   async deleteDuplicateStudent(createStudentListDtos: any[]): Promise<any[]> {
@@ -323,7 +332,7 @@ export class GradeService {
 
     assignment.grades = [];
 
-    grades.forEach(async (grade) => {
+    for (const grade of grades) {
       const newGrade = this.gradeRepo.create({
         studentId: grade.studentId,
         name: grade.name,
@@ -333,7 +342,7 @@ export class GradeService {
       await this.gradeRepo.save(newGrade);
       assignment.grades = [...assignment.grades, newGrade];
       await this.gradeStructureService.saveGradeStructure(assignment);
-    });
+    }
   }
 
   async updateGradeOfGradeStructure(
@@ -420,6 +429,8 @@ export class GradeService {
             throw new InternalServerErrorException();
           }
         }
+
+        await this.syncUserIdBetweenGradeAndJoinClassroom(classroom);
       }
     }
 

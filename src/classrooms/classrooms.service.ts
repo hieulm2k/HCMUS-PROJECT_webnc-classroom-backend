@@ -172,6 +172,8 @@ export class ClassroomsService {
     );
 
     await this.updateGradeStructuresOfClassroom(classroom, gradeStructure);
+
+    await this.gradeService.syncUserIdBetweenGradeAndJoinClassroom(classroom);
     return gradeStructure;
   }
 

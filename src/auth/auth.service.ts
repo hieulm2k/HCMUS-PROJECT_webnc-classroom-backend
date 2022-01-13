@@ -32,8 +32,12 @@ export class AuthService {
 
   async signUp(signUpDto: AuthCredentialsDto.SignUpDto): Promise<void> {
     const user = await this.userRepository.createUser(signUpDto);
-
-    return this.mailService.sendActivationMail(user);
+    try {
+      return this.mailService.sendActivationMail(user);
+    } catch (error) {
+      await this.userRepository.delete({ id: user.id });
+      throw new BadRequestException('Email is not available!');
+    }
   }
 
   async signIn(signInDto: AuthCredentialsDto.SignInDto): Promise<object> {
