@@ -56,6 +56,7 @@ export class GradeStructureService {
   ): Promise<GradeStructure> {
     const gradeStructure = await this.gradeStructureRepo.findOne({
       where: { name: name, classroom: classroom },
+      relations: ['grades'],
     });
 
     if (!gradeStructure) {
