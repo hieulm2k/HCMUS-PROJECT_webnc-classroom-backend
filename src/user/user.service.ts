@@ -46,6 +46,16 @@ export class UserService {
     return found;
   }
 
+  async getUserByStudentId(id: string): Promise<User> {
+    const found = await this.userRepository.findOne({ studentId: id });
+
+    if (!found || found.status !== UserStatus.ACTIVE) {
+      throw new NotFoundException(`User does not exist!`);
+    }
+
+    return found;
+  }
+
   async updateJoinClassroom(
     user: User,
     joinClassroom: JoinClassroom,

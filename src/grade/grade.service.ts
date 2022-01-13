@@ -13,11 +13,7 @@ import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
-import { AddNotificationDto } from 'src/notification/dto/add-noti.entity';
-import {
-  NotificationStatus,
-  NotificationType,
-} from 'src/notification/notification.entity';
+import { NotificationType } from 'src/notification/notification.entity';
 import { NotificationService } from 'src/notification/notification.service';
 import { User, UserStatus } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
@@ -481,16 +477,12 @@ export class GradeService {
       Role.TEACHER,
     );
 
-    for (const teacher of teachers) {
-      const notiDto: AddNotificationDto = {
-        receiver: teacher,
-        type: NotificationType.REQUEST_REVIEW,
-        status: NotificationStatus.NEW,
-        grade: grade,
-      };
-
-      await this.notiService.addNotification(user, notiDto);
-    }
+    await this.notiService.addNotification(
+      user,
+      teachers,
+      await this.gradeRepo.findOne(id),
+      NotificationType.REQUEST_REVIEW,
+    );
 
     // Save grade review to grade
     await this.gradeRepo.save({ ...grade, ...dto });

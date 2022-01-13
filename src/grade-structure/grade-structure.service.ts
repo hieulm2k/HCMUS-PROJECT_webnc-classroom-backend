@@ -41,6 +41,7 @@ export class GradeStructureService {
   ): Promise<GradeStructure> {
     const gradeStructure = await this.gradeStructureRepo.findOne({
       where: { id: id, classroom: classroom },
+      relations: ['grades'],
     });
 
     if (!gradeStructure) {
@@ -136,7 +137,7 @@ export class GradeStructureService {
       grades.forEach((grade) => {
         grade.isFinalize = dto.isFinalize;
       });
-      this.gradeService.saveAllGrades(grades);
+      await this.gradeService.saveAllGrades(grades);
     }
 
     return this.saveGradeStructure({ ...gradeStructure, ...dto });

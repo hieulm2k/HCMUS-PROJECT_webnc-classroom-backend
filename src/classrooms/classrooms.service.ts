@@ -29,6 +29,8 @@ import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 import { GradeService } from 'src/grade/grade.service';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/notification/notification.entity';
 
 @Injectable()
 export class ClassroomsService {
@@ -40,6 +42,7 @@ export class ClassroomsService {
     private mailService: MailService,
     private gradeStructureService: GradeStructureService,
     private gradeService: GradeService,
+    private notiService: NotificationService,
   ) {}
 
   async getClassrooms(user: User): Promise<object[]> {
@@ -304,11 +307,33 @@ export class ClassroomsService {
   ): Promise<GradeStructure> {
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
-    return this.gradeStructureService.updateGradeStructure(
-      gradeId,
-      classroom,
-      updateGradeStructure,
-    );
+    const gradeStructure =
+      await this.gradeStructureService.updateGradeStructure(
+        gradeId,
+        classroom,
+        updateGradeStructure,
+      );
+
+    if (updateGradeStructure.isFinalize) {
+      const grades = gradeStructure.grades;
+      let students;
+      for (const grade of grades) {
+        students = [];
+        try {
+          students.push(
+            await this.userService.getUserByStudentId(grade.studentId),
+          );
+          await this.notiService.addNotification(
+            user,
+            students,
+            grade,
+            NotificationType.FINALIZE_GRADE,
+          );
+        } catch (error) {}
+      }
+    }
+
+    return gradeStructure;
   }
 
   async updateGradeOfGradeStructure(

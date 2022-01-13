@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Grade } from 'src/grade/grade.entity';
 import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
-import { AddNotificationDto } from './dto/add-noti.entity';
-import { Notification, NotificationStatus } from './notification.entity';
+import {
+  Notification,
+  NotificationStatus,
+  NotificationType,
+} from './notification.entity';
 
 @Injectable()
 export class NotificationService {
@@ -19,8 +23,15 @@ export class NotificationService {
     });
   }
 
-  async addNotification(sender: User, dto: AddNotificationDto): Promise<void> {
-    await this.notiRepo.save({ ...dto, sender });
+  async addNotification(
+    sender: User,
+    receivers: User[],
+    grade: Grade,
+    type: NotificationType,
+  ): Promise<void> {
+    for (const receiver of receivers) {
+      await this.notiRepo.save({ sender, grade, receiver, type });
+    }
   }
 
   async updateToRead(user: User): Promise<void> {
