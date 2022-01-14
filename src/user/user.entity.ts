@@ -1,4 +1,5 @@
 import { Exclude } from 'class-transformer';
+import { Role } from 'src/auth/enum/role.enum';
 import { Comment } from 'src/comment/comment.entity';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 import { Notification } from 'src/notification/notification.entity';
@@ -26,6 +27,9 @@ export class User extends BaseEntity {
 
   @Column({ nullable: true, default: null })
   studentId: string;
+
+  @Column({ enum: Role, type: 'enum', default: Role.USER })
+  role: Role;
 
   @Column({ default: false })
   public isRegisteredWithGoogle: boolean;

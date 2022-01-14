@@ -470,6 +470,9 @@ export class GradeService {
     grade.gradeStructure.isFinalize = false;
     await this.gradeStructureService.saveGradeStructure(grade.gradeStructure);
 
+    // Save grade review to grade
+    await this.gradeRepo.save({ ...grade, ...dto });
+
     // Add notifications to all teachers in classroom
     const classroom = grade.gradeStructure.classroom;
     const teachers = await this.joinClassroomService.getMembersByRole(
@@ -480,12 +483,9 @@ export class GradeService {
     await this.notiService.addNotification(
       user,
       teachers,
-      await this.gradeRepo.findOne(id),
+      grade,
       NotificationType.REQUEST_REVIEW,
     );
-
-    // Save grade review to grade
-    await this.gradeRepo.save({ ...grade, ...dto });
   }
 
   async getAllRequestReviews(
