@@ -37,7 +37,7 @@ export class CommentController {
     @Param('gradeId', ParseUUIDPipe) gradeId: string,
     @GetUser() user: User,
     @Body() dto: PostCommentDto,
-  ): Promise<void> {
+  ): Promise<Comment> {
     return this.commentService.postComment(gradeId, user, dto);
   }
 }

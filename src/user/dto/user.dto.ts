@@ -82,3 +82,15 @@ export class ValidateUser {
   @IsUUID()
   roleId: string;
 }
+
+export class CreateAdmin {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name: string;
+}

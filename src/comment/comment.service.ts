@@ -43,7 +43,7 @@ export class CommentService {
     gradeId: string,
     user: User,
     dto: PostCommentDto,
-  ): Promise<void> {
+  ): Promise<Comment> {
     const grade = await this.gradeService.getGradeById(gradeId);
 
     if (
@@ -56,7 +56,11 @@ export class CommentService {
       throw new ForbiddenException('You do not have permission to do this');
     }
 
-    await this.commentRepo.save({ ...dto, sender: user, grade: grade });
+    const comment = await this.commentRepo.save({
+      ...dto,
+      sender: user,
+      grade: grade,
+    });
 
     // if a student comments -> send notification to all teachers
     if (grade.studentId == user.studentId) {
@@ -87,6 +91,8 @@ export class CommentService {
         );
       } catch (error) {}
     }
+
+    return comment;
   }
 
   async deleteAllCommentOfGrade(grade: Grade): Promise<void> {

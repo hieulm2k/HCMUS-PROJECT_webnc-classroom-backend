@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,12 +9,13 @@ import {
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
-import { ChangePwd, UpdateUserDto } from './dto/user.dto';
+import { ChangePwd, CreateAdmin, UpdateUserDto } from './dto/user.dto';
 import { User, UserStatus } from './user.entity';
 import { UsersRepository } from './users.repository';
 import { GradeService } from 'src/grade/grade.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 import { Classroom } from 'src/classrooms/classroom.entity';
+import { Role } from 'src/auth/enum/role.enum';
 
 @Injectable()
 export class UserService {
@@ -24,11 +26,15 @@ export class UserService {
     private readonly joinClassroomService: JoinClassroomService,
   ) {}
 
-  async getUserById(id: string): Promise<User> {
+  async getUserById(id: string, user: User): Promise<User> {
     const found = await this.userRepository.findOne(id);
 
     if (!found || found.status !== UserStatus.ACTIVE) {
       throw new NotFoundException(`User does not exist!`);
+    }
+
+    if (found.role === Role.ADMIN) {
+      await this.acceptRole(user, Role.ADMIN);
     }
 
     return found;
@@ -54,6 +60,11 @@ export class UserService {
     }
 
     return found;
+  }
+
+  async getAllAdmins(user: User): Promise<User[]> {
+    await this.acceptRole(user, Role.ADMIN);
+    return this.userRepository.find({ role: Role.ADMIN });
   }
 
   async updateJoinClassroom(
@@ -135,5 +146,16 @@ export class UserService {
     user.password = await bcrypt.hash(dto.newPassword, salt);
 
     return this.userRepository.save(user);
+  }
+
+  async acceptRole(user: User, role: Role): Promise<void> {
+    if (user.role !== role) {
+      throw new ForbiddenException('You do not have permission to do this');
+    }
+  }
+
+  async createAdmin(user: User, dto: CreateAdmin) {
+    await this.acceptRole(user, Role.ADMIN);
+    await this.userRepository.createAdmin(dto);
   }
 }

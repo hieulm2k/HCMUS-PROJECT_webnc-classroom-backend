@@ -463,8 +463,8 @@ export class GradeService {
     id: string,
     user: User,
     dto: RequestReviewDto,
-  ): Promise<void> {
-    const grade = await this.gradeRepo.findOne({
+  ): Promise<Grade> {
+    let grade = await this.gradeRepo.findOne({
       where: { id: id },
       relations: ['gradeStructure', 'gradeStructure.classroom'],
     });
@@ -491,7 +491,7 @@ export class GradeService {
     await this.gradeStructureService.saveGradeStructure(grade.gradeStructure);
 
     // Save grade review to grade
-    await this.gradeRepo.save({ ...grade, ...dto });
+    grade = await this.gradeRepo.save({ ...grade, ...dto });
 
     // Add notifications to all teachers in classroom
     const classroom = grade.gradeStructure.classroom;
@@ -506,6 +506,8 @@ export class GradeService {
       grade,
       NotificationType.REQUEST_REVIEW,
     );
+
+    return grade;
   }
 
   async getAllRequestReviews(

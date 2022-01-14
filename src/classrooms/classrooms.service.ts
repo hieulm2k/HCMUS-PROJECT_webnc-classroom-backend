@@ -146,6 +146,7 @@ export class ClassroomsService {
     createClassroomDto: CreateClassroomDto,
     user: User,
   ): Promise<Classroom> {
+    await this.acceptRole(user, Role.USER);
     const joinClassroom = await this.joinClassroomService.createJoinClassroom([
       Role.OWNER,
       Role.TEACHER,
@@ -529,6 +530,12 @@ export class ClassroomsService {
 
     if (!isOwner) {
       throw new ForbiddenException('You do not have permission to do this!');
+    }
+  }
+
+  async acceptRole(user: User, role: Role): Promise<void> {
+    if (user.role !== role) {
+      throw new ForbiddenException('You do not have permission to do this');
     }
   }
 }
