@@ -31,6 +31,7 @@ import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationType } from 'src/notification/notification.entity';
+import { ReportStatus } from 'src/grade/grade.entity';
 
 @Injectable()
 export class ClassroomsService {
@@ -352,6 +353,45 @@ export class ClassroomsService {
       structureName,
       dtos,
     );
+
+    if (dtos.length === 1) {
+      const dto = dtos[0];
+      if (dto.isFinalize) {
+        const students = [];
+        const grades = [];
+        try {
+          const gradeStructure =
+            await this.gradeStructureService.getGradeStructureByName(
+              structureName,
+              classroom,
+            );
+
+          const grade =
+            await this.gradeService.findOneByStudentIdAndClassroomIdAndGradeStructure(
+              dto.studentId,
+              classroom.id,
+              gradeStructure,
+            );
+
+          if (grade.reportStatus === ReportStatus.OPEN) {
+            grade.reportStatus = ReportStatus.CLOSED;
+            grades.push(grade);
+            await this.gradeService.saveAllGrades(grades);
+          }
+
+          students.push(
+            await this.userService.getUserByStudentId(dto.studentId),
+          );
+
+          await this.notiService.addNotification(
+            user,
+            students,
+            grade,
+            NotificationType.FINALIZE_GRADE,
+          );
+        } catch (error) {}
+      }
+    }
   }
 
   async updateJoinClassrooms(

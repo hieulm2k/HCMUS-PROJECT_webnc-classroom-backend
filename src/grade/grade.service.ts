@@ -53,6 +53,26 @@ export class GradeService {
     return grade;
   }
 
+  async findOneByStudentIdAndClassroomIdAndGradeStructure(
+    studentId: string,
+    classroomId: string,
+    gradeStructure: GradeStructure,
+  ): Promise<Grade> {
+    const grade = await this.gradeRepo.findOne({
+      where: {
+        studentId: studentId,
+        classroomId: classroomId,
+        gradeStructure: gradeStructure,
+      },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found!');
+    }
+
+    return grade;
+  }
+
   async getAllGrades(classroomId: string): Promise<Grade[]> {
     const query = this.gradeRepo
       .createQueryBuilder('grade')
@@ -509,11 +529,9 @@ export class GradeService {
     const result = [];
 
     for (const gradeStructure of joinClassroom.classroom.gradeStructures) {
-      const temp = { gradeStructure, grade: null };
       for (const grade of gradeStructure.grades) {
         if (grade.reportStatus === ReportStatus.OPEN) {
-          temp.grade = grade;
-          result.push(temp);
+          result.push({ gradeStructure, grade });
         }
       }
     }
