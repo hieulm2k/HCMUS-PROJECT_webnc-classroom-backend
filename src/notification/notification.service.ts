@@ -58,4 +58,8 @@ export class NotificationService {
 
     await this.notiRepo.save(notification);
   }
+
+  async deleteAllNotiOfGrade(grade: Grade): Promise<void> {
+    await this.notiRepo.delete({ grade });
+  }
 }

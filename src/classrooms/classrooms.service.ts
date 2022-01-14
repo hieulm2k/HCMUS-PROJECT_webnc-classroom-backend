@@ -32,6 +32,7 @@ import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
 import { NotificationService } from 'src/notification/notification.service';
 import { NotificationType } from 'src/notification/notification.entity';
 import { ReportStatus } from 'src/grade/grade.entity';
+import { CommentService } from 'src/comment/comment.service';
 
 @Injectable()
 export class ClassroomsService {
@@ -44,6 +45,7 @@ export class ClassroomsService {
     private gradeStructureService: GradeStructureService,
     private gradeService: GradeService,
     private notiService: NotificationService,
+    private commentService: CommentService,
   ) {}
 
   async getClassrooms(user: User): Promise<object[]> {
@@ -191,6 +193,13 @@ export class ClassroomsService {
 
     const grades = await this.gradeService.getAllGrades(classroom.id);
     if (grades.length !== 0) {
+      for (const grade of grades) {
+        // delete all comments
+        await this.commentService.deleteAllCommentOfGrade(grade);
+
+        // delete all notifications
+        await this.notiService.deleteAllNotiOfGrade(grade);
+      }
       // Delete all grades
       await this.gradeService.removeAllGrades(grades);
     }
@@ -440,6 +449,15 @@ export class ClassroomsService {
       classroom,
     );
     const grades = await this.gradeService.getAllGrades(classroom.id);
+
+    for (const grade of grades) {
+      // delete all comments
+      await this.commentService.deleteAllCommentOfGrade(grade);
+
+      // delete all notifications
+      await this.notiService.deleteAllNotiOfGrade(grade);
+    }
+
     await this.gradeService.removeAllGrades(grades);
     await this.gradeStructureService.deleteAllGradeStructuresOfClassroom(
       classroom,
@@ -464,6 +482,16 @@ export class ClassroomsService {
         gradeId,
         classroom,
       );
+
+    const grades = gradeStructure.grades;
+
+    for (const grade of grades) {
+      // delete all comments
+      await this.commentService.deleteAllCommentOfGrade(grade);
+
+      // delete all notifications
+      await this.notiService.deleteAllNotiOfGrade(grade);
+    }
 
     await this.gradeService.deleteAllGradesOfGradeStructure(gradeStructure);
 

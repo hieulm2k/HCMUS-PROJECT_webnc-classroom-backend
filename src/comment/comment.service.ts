@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from 'src/auth/enum/role.enum';
+import { Grade } from 'src/grade/grade.entity';
 import { GradeService } from 'src/grade/grade.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 import { NotificationType } from 'src/notification/notification.entity';
@@ -86,5 +87,9 @@ export class CommentService {
         );
       } catch (error) {}
     }
+  }
+
+  async deleteAllCommentOfGrade(grade: Grade): Promise<void> {
+    await this.commentRepo.delete({ grade });
   }
 }
