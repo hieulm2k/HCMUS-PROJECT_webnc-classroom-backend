@@ -36,7 +36,13 @@ export class CommentService {
       throw new ForbiddenException('You do not have permission to do this');
     }
 
-    return grade.comments;
+    return this.commentRepo.find({
+      where: { grade: grade },
+      relations: ['sender'],
+      order: {
+        createdAt: 'ASC',
+      },
+    });
   }
 
   async postComment(

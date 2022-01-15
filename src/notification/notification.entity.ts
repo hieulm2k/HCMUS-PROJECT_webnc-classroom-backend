@@ -29,9 +29,7 @@ export class Notification extends BaseEntity {
   @JoinColumn()
   receiver: User;
 
-  @ManyToOne(() => Grade, (grade) => grade.notifications, {
-    eager: false,
-  })
+  @ManyToOne(() => Grade, (grade) => grade.notifications)
   @JoinColumn()
   grade: Grade;
 

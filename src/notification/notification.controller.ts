@@ -24,7 +24,7 @@ export class NotificationController {
   @ApiOperation({
     summary: 'to get all notifications of current user',
   })
-  getAllNotifications(@GetUser() user: User): Promise<Notification[]> {
+  getAllNotifications(@GetUser() user: User): Promise<any[]> {
     return this.notiService.getAllNotifications(user);
   }
 

@@ -38,12 +38,7 @@ export class GradeService {
   async getGradeById(id: string): Promise<Grade> {
     const grade = await this.gradeRepo.findOne({
       where: { id: id },
-      relations: [
-        'gradeStructure',
-        'gradeStructure.classroom',
-        'comments',
-        'comments.sender',
-      ],
+      relations: ['gradeStructure', 'gradeStructure.classroom'],
     });
 
     if (!grade) {

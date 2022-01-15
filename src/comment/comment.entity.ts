@@ -11,9 +11,7 @@ export class Comment extends BaseEntity {
   @JoinColumn()
   sender: User;
 
-  @ManyToOne(() => Grade, (grade) => grade.comments, {
-    eager: false,
-  })
+  @ManyToOne(() => Grade, (grade) => grade.comments)
   @JoinColumn()
   grade: Grade;
 

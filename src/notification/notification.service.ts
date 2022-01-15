@@ -19,7 +19,15 @@ export class NotificationService {
   async getAllNotifications(user: User): Promise<Notification[]> {
     return this.notiRepo.find({
       where: { receiver: user },
-      relations: ['sender', 'grade'],
+      relations: [
+        'sender',
+        'grade',
+        'grade.gradeStructure',
+        'grade.gradeStructure.classroom',
+      ],
+      order: {
+        createdAt: 'DESC',
+      },
     });
   }
 

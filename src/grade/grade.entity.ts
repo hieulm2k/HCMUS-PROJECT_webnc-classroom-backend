@@ -46,15 +46,11 @@ export class Grade extends BaseEntity {
   @JoinColumn()
   gradeStructure: GradeStructure;
 
-  @OneToMany(() => Comment, (comment) => comment.grade, {
-    eager: true,
-  })
+  @OneToMany(() => Comment, (comment) => comment.grade)
   @Exclude({ toPlainOnly: true })
   comments: Comment[];
 
-  @OneToMany(() => Notification, (notification) => notification.grade, {
-    eager: true,
-  })
+  @OneToMany(() => Notification, (notification) => notification.grade)
   @Exclude({ toPlainOnly: true })
   notifications: Notification[];
 }

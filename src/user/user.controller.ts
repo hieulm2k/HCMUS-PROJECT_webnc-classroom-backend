@@ -47,7 +47,7 @@ export class UserController {
     return this.userService.getUserById(id, user);
   }
 
-  @Get('/admin')
+  @Get('admin')
   @ApiOperation({ summary: 'to get all admin' })
   async getAllAdmins(@GetUser() user: User): Promise<User[]> {
     return this.userService.getAllAdmins(user);
