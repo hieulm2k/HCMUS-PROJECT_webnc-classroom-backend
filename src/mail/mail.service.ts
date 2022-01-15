@@ -55,4 +55,17 @@ export class MailService {
       html: 'Please click the following link to activate your account: ' + link,
     });
   }
+
+  sendInvitationAdminMail(from: User, target: User) {
+    const link = process.env.FE_URL + '/add-password?token=' + target.token;
+
+    return this.mailerService.sendMail({
+      to: target.email,
+      subject: 'Webnc Classroom - Admin invitation',
+      html:
+        from.name +
+        ' invite you to be an admin of website "Webnc Classroom". Please click the following link to add password and activate your account: ' +
+        link,
+    });
+  }
 }

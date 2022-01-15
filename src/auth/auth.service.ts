@@ -18,6 +18,7 @@ import {
 import { UserStatus } from 'src/user/user.entity';
 import { randomBytes } from 'crypto';
 import { MailService } from 'src/mail/mail.service';
+import { Role } from './enum/role.enum';
 
 const PWD_TOKEN_EXPIRATION = 3; //in days
 
@@ -107,7 +108,7 @@ export class AuthService {
       where: { token: dto.token },
     });
 
-    if (!user || user.status === UserStatus.UNCONFIRMED)
+    if (!user || (user.role === Role.USER && user.status !== UserStatus.ACTIVE))
       throw new BadRequestException('User does not exist');
 
     if (moment().isSameOrAfter(user.tokenExpiration)) {
@@ -127,7 +128,12 @@ export class AuthService {
       where: { token: dto.token },
     });
 
-    if (!user) throw new BadRequestException('Activate account fail');
+    if (
+      !user ||
+      user.status !== UserStatus.UNCONFIRMED ||
+      user.role === Role.ADMIN
+    )
+      throw new BadRequestException('Activate account fail');
 
     if (moment().isSameOrAfter(user.tokenExpiration)) {
       throw new BadRequestException('Token has expired');

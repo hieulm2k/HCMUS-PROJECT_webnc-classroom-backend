@@ -38,6 +38,12 @@ export class UserController {
     return this.userService.updateUser(user, updateUserDto);
   }
 
+  @Get('admin')
+  @ApiOperation({ summary: 'to get all admin' })
+  async getAllAdmins(@GetUser() user: User): Promise<User[]> {
+    return this.userService.getAllAdmins(user);
+  }
+
   @Get('/:id')
   @ApiOperation({ summary: 'to get user information by ID' })
   async getUserById(
@@ -45,12 +51,6 @@ export class UserController {
     @GetUser() user: User,
   ): Promise<User> {
     return this.userService.getUserById(id, user);
-  }
-
-  @Get('admin')
-  @ApiOperation({ summary: 'to get all admin' })
-  async getAllAdmins(@GetUser() user: User): Promise<User[]> {
-    return this.userService.getAllAdmins(user);
   }
 
   @Patch('password')

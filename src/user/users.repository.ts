@@ -9,6 +9,7 @@ import * as moment from 'moment';
 import { AuthCredentialsDto } from '../auth/dto/index.dto';
 import { randomBytes } from 'crypto';
 import { CreateAdmin } from './dto/user.dto';
+import { Role } from 'src/auth/enum/role.enum';
 
 const PWD_TOKEN_EXPIRATION = 3; //in days
 
@@ -49,6 +50,7 @@ export class UsersRepository extends Repository<User> {
     const user = this.create({
       email,
       name,
+      role: Role.ADMIN,
       status: UserStatus.UNCONFIRMED,
       token: token,
       tokenExpiration: moment().add(PWD_TOKEN_EXPIRATION, 'days').toDate(),

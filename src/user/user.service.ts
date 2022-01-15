@@ -16,6 +16,7 @@ import { GradeService } from 'src/grade/grade.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { Role } from 'src/auth/enum/role.enum';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,7 @@ export class UserService {
     private userRepository: UsersRepository,
     private readonly gradeService: GradeService,
     private readonly joinClassroomService: JoinClassroomService,
+    private readonly mailService: MailService,
   ) {}
 
   async getUserById(id: string, user: User): Promise<User> {
@@ -156,6 +158,7 @@ export class UserService {
 
   async createAdmin(user: User, dto: CreateAdmin) {
     await this.acceptRole(user, Role.ADMIN);
-    await this.userRepository.createAdmin(dto);
+    const targetUser = await this.userRepository.createAdmin(dto);
+    return this.mailService.sendInvitationAdminMail(user, targetUser);
   }
 }
