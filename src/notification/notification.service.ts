@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Classroom } from 'src/classrooms/classroom.entity';
 import { Grade } from 'src/grade/grade.entity';
 import { User } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
@@ -14,21 +15,28 @@ export class NotificationService {
   constructor(
     @InjectRepository(Notification)
     private notiRepo: Repository<Notification>,
+    @InjectRepository(Classroom)
+    private classroomRepo: Repository<Classroom>,
   ) {}
 
   async getAllNotifications(user: User): Promise<Notification[]> {
-    return this.notiRepo.find({
+    const notifications = await this.notiRepo.find({
       where: { receiver: user },
-      relations: [
-        'sender',
-        'grade',
-        'grade.gradeStructure',
-        'grade.gradeStructure.classroom',
-      ],
+      relations: ['sender', 'grade'],
       order: {
         createdAt: 'DESC',
       },
     });
+
+    for (const notification of notifications) {
+      notification['classroomName'] = (
+        await this.classroomRepo.findOne({
+          id: notification.grade.classroomId,
+        })
+      ).name;
+    }
+
+    return notifications;
   }
 
   async addNotification(
