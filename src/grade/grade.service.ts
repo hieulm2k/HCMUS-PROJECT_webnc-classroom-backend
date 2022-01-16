@@ -323,7 +323,11 @@ export class GradeService {
     );
 
     for (const student of students) {
-      await this.updateGradeByClassroomAndUser(classroom, student);
+      await this.updateGradeByClassroomAndUser(
+        classroom,
+        student.studentId,
+        student.id,
+      );
     }
   }
 
@@ -538,14 +542,15 @@ export class GradeService {
 
   async updateGradeByClassroomAndUser(
     classroom: Classroom,
-    user: User,
+    studentId: string,
+    userId: string,
   ): Promise<void> {
     const grades = await this.gradeRepo.find({
-      where: { classroomId: classroom.id, studentId: user.studentId },
+      where: { classroomId: classroom.id, studentId: studentId },
     });
 
     for (const grade of grades) {
-      grade.userId = user.id;
+      grade.userId = userId;
       await this.gradeRepo.save(grade);
     }
   }

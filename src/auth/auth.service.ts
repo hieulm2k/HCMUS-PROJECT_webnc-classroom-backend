@@ -61,6 +61,10 @@ export class AuthService {
       };
     }
 
+    if (user && user.status === UserStatus.BANNED) {
+      throw new BadRequestException('Your account banned by admin');
+    }
+
     throw new UnauthorizedException('Please check your login credentials');
   }
 

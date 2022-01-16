@@ -11,7 +11,11 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
-import { CreateAdmin, UpdateUserDto } from './dto/user.dto';
+import {
+  CreateAdmin,
+  UpdateUserByAdminDto,
+  UpdateUserDto,
+} from './dto/user.dto';
 import { ChangePwd } from './dto/user.dto';
 import { User } from './user.entity';
 import { UserService } from './user.service';
@@ -38,8 +42,14 @@ export class UserController {
     return this.userService.updateUser(user, updateUserDto);
   }
 
+  @Get('all')
+  @ApiOperation({ summary: 'to get all users' })
+  async getAllUsers(@GetUser() user: User): Promise<User[]> {
+    return this.userService.getAllUsers(user);
+  }
+
   @Get('admin')
-  @ApiOperation({ summary: 'to get all admin' })
+  @ApiOperation({ summary: 'to get all admins' })
   async getAllAdmins(@GetUser() user: User): Promise<User[]> {
     return this.userService.getAllAdmins(user);
   }
@@ -51,6 +61,16 @@ export class UserController {
     @GetUser() user: User,
   ): Promise<User> {
     return this.userService.getUserById(id, user);
+  }
+
+  @Patch('/:id')
+  @ApiOperation({ summary: 'to update user by ID' })
+  updateUserById(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserDto: UpdateUserByAdminDto,
+    @GetUser() user: User,
+  ): Promise<User> {
+    return this.userService.updateUserById(id, user, updateUserDto);
   }
 
   @Patch('password')

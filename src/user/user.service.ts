@@ -9,7 +9,12 @@ import {
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
-import { ChangePwd, CreateAdmin, UpdateUserDto } from './dto/user.dto';
+import {
+  ChangePwd,
+  CreateAdmin,
+  UpdateUserByAdminDto,
+  UpdateUserDto,
+} from './dto/user.dto';
 import { User, UserStatus } from './user.entity';
 import { UsersRepository } from './users.repository';
 import { GradeService } from 'src/grade/grade.service';
@@ -66,7 +71,18 @@ export class UserService {
 
   async getAllAdmins(user: User): Promise<User[]> {
     await this.acceptRole(user, Role.ADMIN);
-    return this.userRepository.find({ role: Role.ADMIN });
+    return this.userRepository.find({
+      where: { role: Role.ADMIN },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async getAllUsers(user: User): Promise<User[]> {
+    await this.acceptRole(user, Role.ADMIN);
+    return this.userRepository.find({
+      where: { role: Role.USER },
+      order: { createdAt: 'ASC' },
+    });
   }
 
   async updateJoinClassroom(
@@ -82,34 +98,86 @@ export class UserService {
     const { studentId } = updateUserDto;
 
     if (studentId) {
-      const found = await this.userRepository.findOne({
-        studentId,
-      });
-
-      if (user.studentId !== null && studentId !== user.studentId) {
-        throw new BadRequestException(
-          'Cannot update Student ID twice, please contact Admin to update!',
-        );
-      }
-
-      if (found && studentId !== user.studentId) {
-        throw new ConflictException('Student ID already exists!');
-      }
-
-      // If user join a classroom -> need to update all mapping userId of grade of that classroom
-      const joinClassrooms = await this.joinClassroomService.getClassrooms(
-        user,
-      );
-
-      user.studentId = studentId;
-      for (const joinClassroom of joinClassrooms) {
-        const classroom: Classroom = joinClassroom['classroom'];
-        await this.gradeService.updateGradeByClassroomAndUser(classroom, user);
-      }
+      await this.updateStudentId(studentId, user, false);
     }
 
     const updatedUser = await this.userRepository.save({
       ...user,
+      ...updateUserDto,
+    });
+
+    delete updatedUser.password;
+    delete updatedUser.token;
+    delete updatedUser.tokenExpiration;
+    delete updatedUser.joinClassrooms;
+    delete updatedUser.comments;
+    delete updatedUser.notificationsReceived;
+    delete updatedUser.notificationsSent;
+    return updatedUser;
+  }
+
+  private async updateStudentId(
+    studentId: string,
+    user: User,
+    byAdmin: boolean,
+  ) {
+    const found = await this.userRepository.findOne({
+      studentId,
+    });
+
+    if (
+      !byAdmin &&
+      user.role === Role.USER &&
+      user.studentId !== null &&
+      studentId !== user.studentId
+    ) {
+      throw new BadRequestException(
+        'Cannot update Student ID twice, please contact Admin to update!',
+      );
+    }
+
+    if (found && studentId !== user.studentId) {
+      throw new ConflictException('Student ID already exists!');
+    }
+
+    // If user join a classroom -> need to update all mapping userId of grade of that classroom
+    const joinClassrooms = await this.joinClassroomService.getClassrooms(user);
+
+    for (const joinClassroom of joinClassrooms) {
+      const classroom: Classroom = joinClassroom['classroom'];
+      await this.gradeService.updateGradeByClassroomAndUser(
+        classroom,
+        user.studentId,
+        null,
+      );
+      await this.gradeService.updateGradeByClassroomAndUser(
+        classroom,
+        studentId,
+        user.id,
+      );
+    }
+  }
+
+  async updateUserById(
+    id: string,
+    user: User,
+    updateUserDto: UpdateUserByAdminDto,
+  ): Promise<User> {
+    await this.acceptRole(user, Role.ADMIN);
+    const targetUser = await this.userRepository.findOne({ id });
+
+    const { studentId, status } = updateUserDto;
+
+    if (studentId) {
+      await this.updateStudentId(studentId, targetUser, true);
+    }
+
+    if (status && status === UserStatus.UNCONFIRMED) {
+      throw new BadRequestException('Cannot change user to this status!');
+    }
+
+    const updatedUser = await this.userRepository.save({
+      ...targetUser,
       ...updateUserDto,
     });
 

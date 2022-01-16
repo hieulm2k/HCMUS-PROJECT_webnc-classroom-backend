@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -8,6 +9,7 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import { UserStatus } from '../user.entity';
 
 export class UpdateUserDto {
   @ApiPropertyOptional()
@@ -21,6 +23,20 @@ export class UpdateUserDto {
   @IsNotEmpty()
   @IsString()
   studentId: string;
+}
+
+export class UpdateUserByAdminDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  studentId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  @IsEnum(UserStatus)
+  status: UserStatus;
 }
 
 export class FindByTokenQuery {
