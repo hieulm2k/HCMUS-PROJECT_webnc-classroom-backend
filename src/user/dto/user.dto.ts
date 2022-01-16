@@ -10,6 +10,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { UserStatus } from '../user.entity';
+import { Paginate } from './paging';
 
 export class UpdateUserDto {
   @ApiPropertyOptional()
@@ -109,4 +110,11 @@ export class CreateAdmin {
   @IsNotEmpty()
   @MaxLength(100)
   name: string;
+}
+
+export class GetManyQuery extends Paginate {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  search?: string;
 }

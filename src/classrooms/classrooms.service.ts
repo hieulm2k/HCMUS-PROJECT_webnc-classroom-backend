@@ -33,6 +33,8 @@ import { NotificationService } from 'src/notification/notification.service';
 import { NotificationType } from 'src/notification/notification.entity';
 import { ReportStatus } from 'src/grade/grade.entity';
 import { CommentService } from 'src/comment/comment.service';
+import { GetManyQuery } from 'src/user/dto/user.dto';
+import { paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class ClassroomsService {
@@ -48,9 +50,19 @@ export class ClassroomsService {
     private commentService: CommentService,
   ) {}
 
-  async getClassrooms(user: User): Promise<object[]> {
+  async getClassrooms(user: User, query: GetManyQuery) {
     if (user.role === Role.ADMIN) {
-      return this.classroomsRepository.find();
+      let q = this.classroomsRepository.createQueryBuilder('c');
+
+      if (query.search) {
+        q = q.andWhere('c.name ILIKE :search', { search: `%${query.search}%` });
+      }
+
+      q.orderBy('c.createdAt', 'ASC');
+
+      if (String(query.shouldNotPaginate) === 'true') return q.getMany();
+
+      return paginate(q, { limit: query.limit, page: query.page });
     }
 
     return this.joinClassroomService.getClassrooms(user);

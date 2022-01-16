@@ -36,6 +36,7 @@ import { CreateStudentListDto } from 'src/grade/dto/create-student-list.dto';
 import { UpdateClassroomDto } from './dto/update-classroom.dto';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
 import { UpdateGradeOfGradeStructureDto } from 'src/grade/dto/update-grade.dto';
+import { GetManyQuery } from 'src/user/dto/user.dto';
 
 @Controller('classrooms')
 @ApiTags('classrooms')
@@ -49,8 +50,8 @@ export class ClassroomsController {
 
   @Get()
   @ApiOperation({ summary: 'to get all classrooms of current user' })
-  getClassrooms(@GetUser() user: User): Promise<object[]> {
-    return this.classroomService.getClassrooms(user);
+  getClassrooms(@GetUser() user: User, @Query() query: GetManyQuery) {
+    return this.classroomService.getClassrooms(user, query);
   }
 
   @Post()

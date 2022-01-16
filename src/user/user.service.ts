@@ -12,6 +12,7 @@ import { JoinClassroom } from 'src/join-classroom/join-classroom.entity';
 import {
   ChangePwd,
   CreateAdmin,
+  GetManyQuery,
   UpdateUserByAdminDto,
   UpdateUserDto,
 } from './dto/user.dto';
@@ -22,6 +23,7 @@ import { JoinClassroomService } from 'src/join-classroom/join-classroom.service'
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { Role } from 'src/auth/enum/role.enum';
 import { MailService } from 'src/mail/mail.service';
+import { paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()
 export class UserService {
@@ -69,20 +71,24 @@ export class UserService {
     return found;
   }
 
-  async getAllAdmins(user: User): Promise<User[]> {
+  async getAllByRole(user: User, query: GetManyQuery, role: Role) {
     await this.acceptRole(user, Role.ADMIN);
-    return this.userRepository.find({
-      where: { role: Role.ADMIN },
-      order: { createdAt: 'ASC' },
-    });
-  }
 
-  async getAllUsers(user: User): Promise<User[]> {
-    await this.acceptRole(user, Role.ADMIN);
-    return this.userRepository.find({
-      where: { role: Role.USER },
-      order: { createdAt: 'ASC' },
-    });
+    let q = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.role = :role', { role: role });
+
+    if (query.search) {
+      q = q
+        .andWhere('user.name ILIKE :search', { search: `%${query.search}%` })
+        .orWhere('user.email ILIKE :search', { search: `%${query.search}%` });
+    }
+
+    q.orderBy('user.createdAt', 'ASC');
+
+    if (String(query.shouldNotPaginate) === 'true') return q.getMany();
+
+    return paginate(q, { limit: query.limit, page: query.page });
   }
 
   async updateJoinClassroom(

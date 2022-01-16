@@ -6,13 +6,16 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { Role } from 'src/auth/enum/role.enum';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import {
   CreateAdmin,
+  GetManyQuery,
   UpdateUserByAdminDto,
   UpdateUserDto,
 } from './dto/user.dto';
@@ -44,14 +47,14 @@ export class UserController {
 
   @Get('all')
   @ApiOperation({ summary: 'to get all users' })
-  async getAllUsers(@GetUser() user: User): Promise<User[]> {
-    return this.userService.getAllUsers(user);
+  async getAllUsers(@GetUser() user: User, @Query() query: GetManyQuery) {
+    return this.userService.getAllByRole(user, query, Role.USER);
   }
 
   @Get('admin')
   @ApiOperation({ summary: 'to get all admins' })
-  async getAllAdmins(@GetUser() user: User): Promise<User[]> {
-    return this.userService.getAllAdmins(user);
+  async getAllAdmins(@GetUser() user: User, @Query() query: GetManyQuery) {
+    return this.userService.getAllByRole(user, query, Role.ADMIN);
   }
 
   @Get('/:id')
