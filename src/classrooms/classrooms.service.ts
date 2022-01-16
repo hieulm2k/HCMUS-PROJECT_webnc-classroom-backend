@@ -49,6 +49,10 @@ export class ClassroomsService {
   ) {}
 
   async getClassrooms(user: User): Promise<object[]> {
+    if (user.role === Role.ADMIN) {
+      return this.classroomsRepository.find();
+    }
+
     return this.joinClassroomService.getClassrooms(user);
   }
 
@@ -127,6 +131,8 @@ export class ClassroomsService {
     if (!found) {
       throw new NotFoundException(`Classroom does not exist!`);
     } else {
+      if (user.role === Role.ADMIN) return found;
+
       await this.joinClassroomService.getClassroomByUser(found, user);
       return found;
     }
