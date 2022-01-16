@@ -22,7 +22,7 @@ export class NotificationService {
   async getAllNotifications(user: User): Promise<Notification[]> {
     const notifications = await this.notiRepo.find({
       where: { receiver: user },
-      relations: ['sender', 'grade'],
+      relations: ['sender', 'grade', 'grade.gradeStructure'],
       order: {
         createdAt: 'DESC',
       },
