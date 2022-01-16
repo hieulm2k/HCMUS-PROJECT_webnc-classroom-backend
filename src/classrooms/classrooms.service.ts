@@ -57,6 +57,7 @@ export class ClassroomsService {
   }
 
   async getMembers(id: string, user: User): Promise<object> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     const students = await this.joinClassroomService.getMembersByRole(
       classroom,
@@ -88,6 +89,7 @@ export class ClassroomsService {
     user: User,
     param?: GetGradeStructureParam,
   ): Promise<GradeStructure[]> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
 
     if (param) {
@@ -102,6 +104,7 @@ export class ClassroomsService {
   }
 
   async getGradeBoard(id: string, user: User): Promise<any[]> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
 
@@ -113,6 +116,7 @@ export class ClassroomsService {
     user: User,
     studentId: string,
   ): Promise<any> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
 
     if (
@@ -170,6 +174,7 @@ export class ClassroomsService {
     user: User,
     createGradeStructureDto: CreateGradeStructureDto,
   ): Promise<GradeStructure> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
 
@@ -195,6 +200,7 @@ export class ClassroomsService {
     user: User,
     createStudentListDtos: CreateStudentListDto[],
   ): Promise<void> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.acceptOnlyOwner(classroom, user);
 
@@ -230,6 +236,7 @@ export class ClassroomsService {
     user: User,
     inviteJoinClassroomDto: InviteJoinClassroomDto,
   ): Promise<void> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.classroomsRepository.findOne({ id });
 
     if (!classroom) {
@@ -271,6 +278,7 @@ export class ClassroomsService {
     user: User,
     inviteJoinClassroomByEmailDto: InviteJoinClassroomByEmailDto,
   ): Promise<void> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.classroomsRepository.findOne(id);
 
     if (!classroom) {
@@ -307,6 +315,7 @@ export class ClassroomsService {
     updateClassroomDto: UpdateClassroomDto,
     user: User,
   ): Promise<Classroom> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.acceptOnlyOwner(classroom, user);
 
@@ -322,6 +331,7 @@ export class ClassroomsService {
     user: User,
     updateGradeStructure: UpdateGradeStructureDto,
   ): Promise<GradeStructure> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
     const gradeStructure =
@@ -359,6 +369,7 @@ export class ClassroomsService {
     user: User,
     dtos: UpdateGradeOfGradeStructureDto[],
   ): Promise<void> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
 
@@ -450,6 +461,7 @@ export class ClassroomsService {
   }
 
   async deleteClassroom(id: string, user: User): Promise<void> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.acceptOnlyOwner(classroom, user);
     await this.joinClassroomService.deleteAllJoinClassroomsOfClassroom(
@@ -482,6 +494,7 @@ export class ClassroomsService {
     gradeId: string,
     user: User,
   ): Promise<void> {
+    await this.acceptRole(user, Role.USER);
     const classroom = await this.getClassroomById(id, user);
     await this.preventStudent(classroom, user);
     const gradeStructure =

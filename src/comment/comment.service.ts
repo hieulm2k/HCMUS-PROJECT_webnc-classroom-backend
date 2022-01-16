@@ -24,6 +24,7 @@ export class CommentService {
   ) {}
 
   async getAllComments(gradeId: string, user: User): Promise<Comment[]> {
+    await this.acceptRole(user, Role.USER);
     const grade = await this.gradeService.getGradeById(gradeId);
 
     if (
@@ -50,6 +51,7 @@ export class CommentService {
     user: User,
     dto: PostCommentDto,
   ): Promise<Comment> {
+    await this.acceptRole(user, Role.USER);
     const grade = await this.gradeService.getGradeById(gradeId);
 
     if (
@@ -103,5 +105,11 @@ export class CommentService {
 
   async deleteAllCommentOfGrade(grade: Grade): Promise<void> {
     await this.commentRepo.delete({ grade });
+  }
+
+  async acceptRole(user: User, role: Role): Promise<void> {
+    if (user.role !== role) {
+      throw new ForbiddenException('You do not have permission to do this');
+    }
   }
 }

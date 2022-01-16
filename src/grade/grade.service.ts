@@ -463,6 +463,7 @@ export class GradeService {
     user: User,
     dto: RequestReviewDto,
   ): Promise<Grade> {
+    await this.acceptRole(user, Role.USER);
     let grade = await this.gradeRepo.findOne({
       where: { id: id },
       relations: ['gradeStructure', 'gradeStructure.classroom'],
@@ -513,6 +514,7 @@ export class GradeService {
     classroomId: string,
     user: User,
   ): Promise<Grade[]> {
+    await this.acceptRole(user, Role.USER);
     const joinClassroom =
       await this.joinClassroomService.getJoinClassroomByClassroomIdAndUserId(
         classroomId,
@@ -552,6 +554,12 @@ export class GradeService {
     for (const grade of grades) {
       grade.userId = userId;
       await this.gradeRepo.save(grade);
+    }
+  }
+
+  async acceptRole(user: User, role: Role): Promise<void> {
+    if (user.role !== role) {
+      throw new ForbiddenException('You do not have permission to do this');
     }
   }
 }
