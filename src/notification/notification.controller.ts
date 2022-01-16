@@ -30,7 +30,7 @@ export class NotificationController {
 
   @Patch()
   @ApiOperation({
-    summary: 'to update all notifications status to To Read',
+    summary: 'to update all notifications from status New to To Read',
   })
   updateToRead(@GetUser() user: User): Promise<void> {
     return this.notiService.updateToRead(user);

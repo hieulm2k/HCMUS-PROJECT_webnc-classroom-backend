@@ -54,7 +54,9 @@ export class NotificationService {
     const notifications = await this.getAllNotifications(user);
 
     for (const notification of notifications) {
-      notification.status = NotificationStatus.TO_READ;
+      if (notification.status === NotificationStatus.NEW) {
+        notification.status = NotificationStatus.TO_READ;
+      }
     }
 
     await this.notiRepo.save(notifications);
