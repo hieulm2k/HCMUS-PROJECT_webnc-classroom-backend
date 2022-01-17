@@ -82,6 +82,12 @@ export class AuthService {
     if (!user || user.status === UserStatus.UNCONFIRMED)
       throw new BadRequestException('User does not exist');
 
+    if (user && String(user.isRegisteredWithGoogle) === 'true') {
+      throw new BadRequestException(
+        'Cannot reset password because you are login with google',
+      );
+    }
+
     const token = randomBytes(48).toString('base64');
 
     return this.mailService
