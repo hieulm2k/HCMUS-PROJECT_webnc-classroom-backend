@@ -57,6 +57,18 @@ export class UserController {
     return this.userService.getAllByRole(user, query, Role.ADMIN);
   }
 
+  @Patch('password')
+  @ApiOperation({ summary: 'to request change password' })
+  changePwd(@Body() dto: ChangePwd, @GetUser() user: User) {
+    return this.userService.changePwd(dto, user);
+  }
+
+  @Post('admin')
+  @ApiOperation({ summary: 'to create new admin' })
+  createAdmin(@Body() dto: CreateAdmin, @GetUser() user: User) {
+    return this.userService.createAdmin(user, dto);
+  }
+
   @Get('/:id')
   @ApiOperation({ summary: 'to get user information by ID' })
   async getUserById(
@@ -74,17 +86,5 @@ export class UserController {
     @GetUser() user: User,
   ): Promise<User> {
     return this.userService.updateUserById(id, user, updateUserDto);
-  }
-
-  @Patch('password')
-  @ApiOperation({ summary: 'to request change password' })
-  changePwd(@Body() dto: ChangePwd, @GetUser() user: User) {
-    return this.userService.changePwd(dto, user);
-  }
-
-  @Post('admin')
-  @ApiOperation({ summary: 'to create new admin' })
-  createAdmin(@Body() dto: CreateAdmin, @GetUser() user: User) {
-    return this.userService.createAdmin(user, dto);
   }
 }
