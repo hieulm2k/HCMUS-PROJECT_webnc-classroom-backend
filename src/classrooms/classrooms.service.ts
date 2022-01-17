@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   NotAcceptableException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateClassroomDto } from './dto/create-classroom.dto';
 import { ClassroomsRepository } from './classroom.repository';
@@ -34,6 +35,7 @@ import { NotificationType } from 'src/notification/notification.entity';
 import { ReportStatus } from 'src/grade/grade.entity';
 import { CommentService } from 'src/comment/comment.service';
 import { GetManyQuery } from 'src/user/dto/user.dto';
+import { UserStatus } from 'src/user/user.entity';
 import { paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()
@@ -51,6 +53,7 @@ export class ClassroomsService {
   ) {}
 
   async getClassrooms(user: User, query: GetManyQuery) {
+    await this.preventBannedAccount(user);
     if (user.role === Role.ADMIN) {
       let q = this.classroomsRepository.createQueryBuilder('c');
 
@@ -142,6 +145,7 @@ export class ClassroomsService {
   }
 
   async getClassroomById(id: string, user: User): Promise<Classroom> {
+    await this.preventBannedAccount(user);
     const found = await this.classroomsRepository.findOne({ id });
 
     if (!found) {
@@ -542,6 +546,12 @@ export class ClassroomsService {
         throw new ForbiddenException('You do not have permission to do this!');
       }
     });
+  }
+
+  async preventBannedAccount(user: User): Promise<void> {
+    if (user.status === UserStatus.BANNED) {
+      throw new UnauthorizedException('Your account banned by Admin');
+    }
   }
 
   async acceptOnlyOwner(classroom: Classroom, user: User): Promise<void> {
