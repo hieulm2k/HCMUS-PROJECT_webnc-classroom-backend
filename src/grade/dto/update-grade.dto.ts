@@ -26,3 +26,15 @@ export class UpdateGradeOfGradeStructureDto {
   @IsBoolean()
   isFinalize: boolean;
 }
+
+export class RequestReviewDto {
+  @ApiProperty({ type: Double })
+  @IsNotEmpty()
+  @IsNumber()
+  expectedGrade: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  message: string;
+}

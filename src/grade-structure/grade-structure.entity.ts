@@ -18,15 +18,13 @@ export class GradeStructure extends BaseEntity {
   @Column({ default: false })
   isFinalize: boolean;
 
-  @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
+  @ManyToOne(() => Classroom, (classroom) => classroom.gradeStructures, {
     eager: false,
   })
   @JoinColumn()
   classroom: Classroom;
 
-  @OneToMany((_type) => Grade, (grade) => grade.gradeStructure, {
-    eager: true,
-  })
+  @OneToMany(() => Grade, (grade) => grade.gradeStructure)
   @Exclude({ toPlainOnly: true })
   grades: Grade[];
 }

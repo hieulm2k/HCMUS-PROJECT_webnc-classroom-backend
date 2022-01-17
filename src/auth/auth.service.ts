@@ -18,6 +18,7 @@ import {
 import { UserStatus } from 'src/user/user.entity';
 import { randomBytes } from 'crypto';
 import { MailService } from 'src/mail/mail.service';
+import { Role } from './enum/role.enum';
 
 const PWD_TOKEN_EXPIRATION = 3; //in days
 
@@ -32,13 +33,21 @@ export class AuthService {
 
   async signUp(signUpDto: AuthCredentialsDto.SignUpDto): Promise<void> {
     const user = await this.userRepository.createUser(signUpDto);
-
-    return this.mailService.sendActivationMail(user);
+    try {
+      return this.mailService.sendActivationMail(user);
+    } catch (error) {
+      await this.userRepository.delete({ id: user.id });
+      throw new BadRequestException('Email is not available!');
+    }
   }
 
   async signIn(signInDto: AuthCredentialsDto.SignInDto): Promise<object> {
     const { email, password } = signInDto;
     const user = await this.userRepository.findOne({ email });
+
+    if (user && user.isRegisteredWithGoogle) {
+      throw new BadRequestException('Please login this email with google');
+    }
 
     if (
       user &&
@@ -50,9 +59,13 @@ export class AuthService {
         user: user,
         accessToken,
       };
-    } else {
-      throw new UnauthorizedException('Please check your login credentials');
     }
+
+    if (user && user.status === UserStatus.BANNED) {
+      throw new BadRequestException('Your account banned by admin');
+    }
+
+    throw new UnauthorizedException('Please check your login credentials');
   }
 
   async getJwtAccessToken(email: string) {
@@ -99,7 +112,7 @@ export class AuthService {
       where: { token: dto.token },
     });
 
-    if (!user || user.status === UserStatus.UNCONFIRMED)
+    if (!user || (user.role === Role.USER && user.status !== UserStatus.ACTIVE))
       throw new BadRequestException('User does not exist');
 
     if (moment().isSameOrAfter(user.tokenExpiration)) {
@@ -119,7 +132,12 @@ export class AuthService {
       where: { token: dto.token },
     });
 
-    if (!user) throw new BadRequestException('Activate account fail');
+    if (
+      !user ||
+      user.status !== UserStatus.UNCONFIRMED ||
+      user.role === Role.ADMIN
+    )
+      throw new BadRequestException('Activate account fail');
 
     if (moment().isSameOrAfter(user.tokenExpiration)) {
       throw new BadRequestException('Token has expired');

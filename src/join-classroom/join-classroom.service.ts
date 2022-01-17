@@ -44,4 +44,26 @@ export class JoinClassroomService {
   ): Promise<void> {
     await this.joinClassroomRepository.delete({ classroom });
   }
+
+  getJoinClassroomByClassroomIdAndUserId(
+    classroomId: string,
+    userId: string,
+  ): Promise<JoinClassroom> {
+    return this.joinClassroomRepository.getJoinClassroomByClassroomIdAndUserId(
+      classroomId,
+      userId,
+    );
+  }
+
+  async checkTeacher(classroom: Classroom, user: User): Promise<boolean> {
+    const teachers = await this.getMembersByRole(classroom, Role.TEACHER);
+
+    for (const teacher of teachers) {
+      if (teacher.id === user.id) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 }

@@ -9,13 +9,13 @@ export class JoinClassroom extends BaseEntity {
   @Column({ enum: Role, type: 'enum', array: true })
   roles: Role[];
 
-  @ManyToOne((_type) => User, (user) => user.joinClassrooms, {
+  @ManyToOne(() => User, (user) => user.joinClassrooms, {
     eager: false,
   })
   @JoinColumn()
   user: User;
 
-  @ManyToOne((_type) => Classroom, (classroom) => classroom.joinClassrooms, {
+  @ManyToOne(() => Classroom, (classroom) => classroom.joinClassrooms, {
     eager: false,
   })
   @JoinColumn()

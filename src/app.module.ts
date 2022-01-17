@@ -11,6 +11,8 @@ import { GoogleAuthenticationModule } from './google-authentication/google-authe
 import { MailModule } from './mail/mail.module';
 import { GradeStructureModule } from './grade-structure/grade-structure.module';
 import { GradeModule } from './grade/grade.module';
+import { CommentModule } from './comment/comment.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { GradeModule } from './grade/grade.module';
     MailModule,
     GradeStructureModule,
     GradeModule,
+    CommentModule,
+    NotificationModule,
   ],
   controllers: [UserController],
 })

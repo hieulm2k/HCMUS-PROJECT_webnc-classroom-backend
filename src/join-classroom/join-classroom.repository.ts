@@ -100,4 +100,19 @@ export class JoinClassroomRepository extends Repository<JoinClassroom> {
 
     return joinClassroom;
   }
+
+  async getJoinClassroomByClassroomIdAndUserId(
+    classroomId: string,
+    userId: string,
+  ): Promise<JoinClassroom> {
+    const query = this.createQueryBuilder('joinClassroom')
+      .leftJoinAndSelect('joinClassroom.user', 'user')
+      .leftJoinAndSelect('joinClassroom.classroom', 'classroom')
+      .leftJoinAndSelect('classroom.gradeStructures', 'gradeStructures')
+      .leftJoinAndSelect('gradeStructures.grades', 'grades')
+      .where('classroom.id = :classroomId', { classroomId: classroomId })
+      .andWhere('user.id = :userId', { userId: userId });
+
+    return query.getOne();
+  }
 }

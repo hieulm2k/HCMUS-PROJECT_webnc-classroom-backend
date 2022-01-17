@@ -1,18 +1,28 @@
 import {
+  BadRequestException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from 'src/auth/enum/role.enum';
 import { Classroom } from 'src/classrooms/classroom.entity';
 import { GradeStructure } from 'src/grade-structure/grade-structure.entity';
 import { GradeStructureService } from 'src/grade-structure/grade-structure.service';
 import { JoinClassroomService } from 'src/join-classroom/join-classroom.service';
+import { NotificationType } from 'src/notification/notification.entity';
+import { NotificationService } from 'src/notification/notification.service';
+import { User, UserStatus } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
 import { CreateStudentListDto } from './dto/create-student-list.dto';
-import { UpdateGradeOfGradeStructureDto } from './dto/update-grade.dto';
-import { Grade } from './grade.entity';
+import {
+  RequestReviewDto,
+  UpdateGradeOfGradeStructureDto,
+} from './dto/update-grade.dto';
+import { Grade, ReportStatus } from './grade.entity';
 
 @Injectable()
 export class GradeService {
@@ -22,7 +32,41 @@ export class GradeService {
     @Inject(forwardRef(() => GradeStructureService))
     private readonly gradeStructureService: GradeStructureService,
     private readonly joinClassroomService: JoinClassroomService,
+    private readonly notiService: NotificationService,
   ) {}
+
+  async getGradeById(id: string): Promise<Grade> {
+    const grade = await this.gradeRepo.findOne({
+      where: { id: id },
+      relations: ['gradeStructure', 'gradeStructure.classroom'],
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found!');
+    }
+
+    return grade;
+  }
+
+  async findOneByStudentIdAndClassroomIdAndGradeStructure(
+    studentId: string,
+    classroomId: string,
+    gradeStructure: GradeStructure,
+  ): Promise<Grade> {
+    const grade = await this.gradeRepo.findOne({
+      where: {
+        studentId: studentId,
+        classroomId: classroomId,
+        gradeStructure: gradeStructure,
+      },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found!');
+    }
+
+    return grade;
+  }
 
   async getAllGrades(classroomId: string): Promise<Grade[]> {
     const query = this.gradeRepo
@@ -58,18 +102,12 @@ export class GradeService {
         grades[0].studentId,
       );
 
-      let newUserId = user === null ? null : user.id;
-
-      await this.gradeRepo.update(grades[0].id, {
-        ...grades[0],
-        userId: newUserId,
-      });
-
-      await this.updateUserIdByDefaultStudent(
-        classroom.id,
-        grades[0].studentId,
-        newUserId,
-      );
+      let newUserId =
+        user === null
+          ? null
+          : user.status === UserStatus.ACTIVE
+          ? user.id
+          : null;
 
       let preGrade = {
         studentId: grades[0].studentId,
@@ -78,8 +116,10 @@ export class GradeService {
       };
 
       preGrade[grades[0].gradeStructure.name] = {
+        gradeId: grades[0].id,
         grade: grades[0].grade,
         isFinalize: grades[0].isFinalize,
+        reportStatus: grades[0].reportStatus,
       };
 
       if (grades[0].grade) {
@@ -102,13 +142,12 @@ export class GradeService {
             grades[i].studentId,
           );
 
-          newUserId = user === null ? null : user.id;
-
-          await this.updateUserIdByDefaultStudent(
-            classroom.id,
-            grades[i].studentId,
-            newUserId,
-          );
+          newUserId =
+            user === null
+              ? null
+              : user.status === UserStatus.ACTIVE
+              ? user.id
+              : null;
 
           preGrade = {
             studentId: grades[i].studentId,
@@ -117,8 +156,10 @@ export class GradeService {
           };
 
           preGrade[grades[i].gradeStructure.name] = {
+            gradeId: grades[i].id,
             grade: grades[i].grade,
             isFinalize: grades[i].isFinalize,
+            reportStatus: grades[i].reportStatus,
           };
 
           if (grades[i].grade) {
@@ -127,8 +168,10 @@ export class GradeService {
           count += grades[0].gradeStructure.grade;
         } else if (grades[i].studentId === grades[i - 1].studentId) {
           preGrade[grades[i].gradeStructure.name] = {
+            gradeId: grades[i].id,
             grade: grades[i].grade,
             isFinalize: grades[i].isFinalize,
+            reportStatus: grades[i].reportStatus,
           };
 
           if (grades[i].grade) {
@@ -137,11 +180,6 @@ export class GradeService {
 
           count += grades[i].gradeStructure.grade;
         }
-
-        await this.gradeRepo.update(grades[i].id, {
-          ...grades[i],
-          userId: newUserId,
-        });
       }
       // count total grade of pre grade
       preGrade['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
@@ -158,24 +196,57 @@ export class GradeService {
       .getMany();
 
     if (studentList.length === 0) return null;
+    return studentList;
+  }
 
-    for (let i = 0; i < studentList.length; ++i) {
-      const user =
-        await this.joinClassroomService.getUserInClassroomByStudentId(
-          classroom,
-          studentList[i].studentId,
-        );
+  async getGradeOfStudentId(
+    classroom: Classroom,
+    studentId: string,
+  ): Promise<any> {
+    const grades = await this.gradeRepo
+      .createQueryBuilder('grade')
+      .leftJoinAndSelect('grade.gradeStructure', 'gradeStructure')
+      .where('grade.gradeStructure is not null')
+      .andWhere('grade.classroomId = :id', { id: classroom.id })
+      .andWhere('grade.studentId = :studentId', { studentId: studentId })
+      .orderBy('grade.studentId')
+      .addOrderBy('gradeStructure.order')
+      .getMany();
 
-      studentList[i].userId = user === null ? null : user.id;
+    let totalGrade = 0;
+    let count = 0;
 
-      await this.gradeRepo.update(studentList[i].id, {
-        userId: user === null ? null : user.id,
+    const user = await this.joinClassroomService.getUserInClassroomByStudentId(
+      classroom,
+      studentId,
+    );
+
+    const gradeDetail = { user: user, grades: [] };
+
+    for (let i = 0; i < grades.length; ++i) {
+      gradeDetail.grades.push({
+        gradeId: grades[i].id,
+        name: grades[i].gradeStructure.name,
+        grade: grades[i].grade,
+        isFinalize: grades[i].isFinalize,
+        reportInfo: {
+          reportStatus: grades[i].reportStatus,
+          expectedGrade: grades[i].expectedGrade,
+          message: grades[i].message,
+        },
       });
 
-      delete studentList[i].id;
+      if (grades[i].grade) {
+        totalGrade += grades[i].grade * grades[i].gradeStructure.grade;
+      }
+
+      count += grades[i].gradeStructure.grade;
     }
 
-    return studentList;
+    // count total grade of pre grade
+    gradeDetail['totalGrade'] = Math.round((totalGrade / count) * 100) / 100;
+
+    return gradeDetail;
   }
 
   async removeAllGrades(grades: Grade[]): Promise<void> {
@@ -218,13 +289,15 @@ export class GradeService {
         }
       }
     }
+
+    await this.syncUserIdBetweenGradeAndJoinClassroom(classroom);
   }
 
   async createStudentListWithoutGradeStructure(
     createStudentListDtos: CreateStudentListDto[],
     classroom: Classroom,
   ): Promise<void> {
-    createStudentListDtos.forEach(async (student) => {
+    for (const student of createStudentListDtos) {
       const { studentId, name } = student;
 
       const grade = this.gradeRepo.create({
@@ -238,7 +311,24 @@ export class GradeService {
       } catch (error) {
         throw new InternalServerErrorException();
       }
-    });
+    }
+  }
+
+  async syncUserIdBetweenGradeAndJoinClassroom(
+    classroom: Classroom,
+  ): Promise<void> {
+    const students = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.STUDENT,
+    );
+
+    for (const student of students) {
+      await this.updateGradeByClassroomAndUser(
+        classroom,
+        student.studentId,
+        student.id,
+      );
+    }
   }
 
   async deleteDuplicateStudent(createStudentListDtos: any[]): Promise<any[]> {
@@ -257,7 +347,7 @@ export class GradeService {
 
     assignment.grades = [];
 
-    grades.forEach(async (grade) => {
+    for (const grade of grades) {
       const newGrade = this.gradeRepo.create({
         studentId: grade.studentId,
         name: grade.name,
@@ -267,25 +357,7 @@ export class GradeService {
       await this.gradeRepo.save(newGrade);
       assignment.grades = [...assignment.grades, newGrade];
       await this.gradeStructureService.saveGradeStructure(assignment);
-    });
-  }
-
-  async updateUserIdByDefaultStudent(
-    classroomId: string,
-    studentId: string,
-    newUserId: string,
-  ): Promise<Grade> {
-    const student = await this.gradeRepo.findOne({
-      where: {
-        studentId: studentId,
-        classroomId: classroomId,
-        gradeStructure: null,
-      },
-      relations: ['gradeStructure'],
-    });
-
-    student.userId = newUserId;
-    return this.gradeRepo.save(student);
+    }
   }
 
   async updateGradeOfGradeStructure(
@@ -372,6 +444,8 @@ export class GradeService {
             throw new InternalServerErrorException();
           }
         }
+
+        await this.syncUserIdBetweenGradeAndJoinClassroom(classroom);
       }
     }
 
@@ -382,5 +456,110 @@ export class GradeService {
     gradeStructure: GradeStructure,
   ): Promise<void> {
     await this.gradeRepo.delete({ gradeStructure });
+  }
+
+  async requestReview(
+    id: string,
+    user: User,
+    dto: RequestReviewDto,
+  ): Promise<Grade> {
+    await this.acceptRole(user, Role.USER);
+    let grade = await this.gradeRepo.findOne({
+      where: { id: id },
+      relations: ['gradeStructure', 'gradeStructure.classroom'],
+    });
+
+    if (!grade || grade.studentId !== user.studentId) {
+      throw new NotFoundException('Grade does not exists!');
+    }
+
+    if (grade.reportStatus !== ReportStatus.NEW) {
+      throw new BadRequestException('Cannot report twice times!');
+    }
+
+    if (grade.grade === null || !grade.isFinalize) {
+      throw new BadRequestException(
+        'Cannot request review now, please wait the teachers to update grade or finalize grade',
+      );
+    }
+
+    grade.reportStatus = ReportStatus.OPEN;
+    grade.isFinalize = false;
+
+    // Update grade structure
+    grade.gradeStructure.isFinalize = false;
+    await this.gradeStructureService.saveGradeStructure(grade.gradeStructure);
+
+    // Save grade review to grade
+    grade = await this.gradeRepo.save({ ...grade, ...dto });
+
+    // Add notifications to all teachers in classroom
+    const classroom = grade.gradeStructure.classroom;
+    const teachers = await this.joinClassroomService.getMembersByRole(
+      classroom,
+      Role.TEACHER,
+    );
+
+    await this.notiService.addNotification(
+      user,
+      teachers,
+      grade,
+      NotificationType.REQUEST_REVIEW,
+    );
+
+    return grade;
+  }
+
+  async getAllRequestReviews(
+    classroomId: string,
+    user: User,
+  ): Promise<Grade[]> {
+    await this.acceptRole(user, Role.USER);
+    const joinClassroom =
+      await this.joinClassroomService.getJoinClassroomByClassroomIdAndUserId(
+        classroomId,
+        user.id,
+      );
+
+    if (!joinClassroom) {
+      throw new NotFoundException('Classroom does not exists!');
+    }
+
+    if (!joinClassroom.roles.includes(Role.TEACHER)) {
+      throw new ForbiddenException('You do not have permission to do this!');
+    }
+
+    const result = [];
+
+    for (const gradeStructure of joinClassroom.classroom.gradeStructures) {
+      for (const grade of gradeStructure.grades) {
+        if (grade.reportStatus === ReportStatus.OPEN) {
+          result.push({ gradeStructure, grade });
+        }
+      }
+    }
+
+    return result;
+  }
+
+  async updateGradeByClassroomAndUser(
+    classroom: Classroom,
+    studentId: string,
+    userId: string,
+  ): Promise<void> {
+    const grades = await this.gradeRepo.find({
+      where: { classroomId: classroom.id, studentId: studentId },
+    });
+
+    for (const grade of grades) {
+      grade.userId = userId;
+      await this.gradeRepo.save(grade);
+    }
+  }
+
+  async acceptRole(user: User, role: Role): Promise<void> {
+    if (user.role !== role) {
+      throw new ForbiddenException('You do not have permission to do this');
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -8,6 +9,8 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import { UserStatus } from '../user.entity';
+import { Paginate } from './paging';
 
 export class UpdateUserDto {
   @ApiPropertyOptional()
@@ -21,6 +24,20 @@ export class UpdateUserDto {
   @IsNotEmpty()
   @IsString()
   studentId: string;
+}
+
+export class UpdateUserByAdminDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  studentId: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNotEmpty()
+  @IsEnum(UserStatus)
+  status: UserStatus;
 }
 
 export class FindByTokenQuery {
@@ -81,4 +98,23 @@ export class ValidateUser {
   @ApiProperty()
   @IsUUID()
   roleId: string;
+}
+
+export class CreateAdmin {
+  @ApiProperty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  name: string;
+}
+
+export class GetManyQuery extends Paginate {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  search?: string;
 }
