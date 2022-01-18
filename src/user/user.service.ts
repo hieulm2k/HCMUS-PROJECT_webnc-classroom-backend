@@ -54,8 +54,12 @@ export class UserService {
       email,
     });
 
-    if (!found || found.status !== UserStatus.ACTIVE) {
+    if (!found) {
       throw new NotFoundException(`User with email "${email}" does not exist!`);
+    }
+
+    if (found && found.status !== UserStatus.ACTIVE) {
+      throw new ForbiddenException('Your account banned by admin');
     }
 
     return found;

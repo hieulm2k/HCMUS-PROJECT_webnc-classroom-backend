@@ -30,7 +30,7 @@ export class GoogleAuthenticationService {
       return this.handleRegisteredUser(user);
     } catch (error) {
       if (error.status !== 404) {
-        throw new error();
+        throw error;
       }
 
       return this.registerUser(token, email);
