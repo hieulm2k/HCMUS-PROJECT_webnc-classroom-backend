@@ -57,7 +57,8 @@ export class MailService {
   }
 
   sendInvitationAdminMail(from: User, target: User) {
-    const link = process.env.ADMIN_URL + '/add-password?token=' + target.token;
+    const link =
+      process.env.ADMIN_URL + '/#/add-password?token=' + target.token;
 
     return this.mailerService.sendMail({
       to: target.email,

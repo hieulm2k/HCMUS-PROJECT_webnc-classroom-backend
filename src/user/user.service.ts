@@ -38,7 +38,7 @@ export class UserService {
   async getUserById(id: string, user: User): Promise<User> {
     const found = await this.userRepository.findOne(id);
 
-    if (!found || found.status !== UserStatus.ACTIVE) {
+    if (!found) {
       throw new NotFoundException(`User does not exist!`);
     }
 
@@ -85,7 +85,8 @@ export class UserService {
     if (query.search) {
       q = q
         .andWhere('user.name ILIKE :search', { search: `%${query.search}%` })
-        .orWhere('user.email ILIKE :search', { search: `%${query.search}%` });
+        .orWhere('user.role = :role', { role: role })
+        .andWhere('user.email ILIKE :search', { search: `%${query.search}%` });
     }
 
     q.orderBy('user.createdAt', 'ASC');
