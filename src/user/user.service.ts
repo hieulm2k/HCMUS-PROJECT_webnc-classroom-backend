@@ -213,6 +213,12 @@ export class UserService {
   }
 
   async changePwd(dto: ChangePwd, user: User) {
+    if (String(user.isRegisteredWithGoogle) === 'true') {
+      throw new BadRequestException(
+        'Cannot change password because you are login with google',
+      );
+    }
+
     if (!(await bcrypt.compare(dto.oldPassword, user.password))) {
       throw new BadRequestException('Old password is wrong');
     }
